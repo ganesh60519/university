@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ScrollView, 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -133,6 +134,45 @@ const COLOR_PALETTE = [
   '#f9a825', // Warm Orange
 ];
 
+// Dashboard cards configuration
+const DASHBOARD_CARDS = [
+  {
+    name: 'Tasks',
+    icon: 'assignment',
+    color: ['#667eea', '#764ba2'],
+    navigateTo: 'Tasks',
+    key: 'totalTasks',
+  },
+  {
+    name: 'Students',
+    icon: 'school',
+    color: ['#43cea2', '#185a9d'],
+    navigateTo: 'Users',
+    key: 'totalStudents',
+  },
+  {
+    name: 'Faculty',
+    icon: 'people',
+    color: ['#ffaf7b', '#d76d77'],
+    navigateTo: 'Users',
+    key: 'totalFaculty',
+  },
+  {
+    name: 'Users',
+    icon: 'group',
+    color: ['#f7971e', '#ffd200'],
+    navigateTo: 'Users',
+    key: 'totalUsers',
+  },
+  {
+    name: 'Tickets',
+    icon: 'confirmation-number',
+    color: ['#f953c6', '#b91d73'],
+    navigateTo: 'Tickets',
+    key: 'totalTickets',
+  },
+];
+
 // Home Screen Component
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -140,12 +180,10 @@ const HomeScreen = () => {
     totalTasks: 0,
     totalStudents: 0,
     totalFaculty: 0,
-    attendancePercentage: 0,
     totalUsers: 0,
     totalTickets: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [backgroundColor, setBackgroundColor] = useState(COLOR_PALETTE[0]);
   const [error, setError] = useState(null);
   const [errorDialogVisible, setErrorDialogVisible] = useState(false);
 
@@ -189,7 +227,7 @@ const HomeScreen = () => {
         return;
       }
 
-      const [tasksResponse, usersResponse, attendanceResponse, ticketsResponse] = await Promise.all([
+      const [tasksResponse, usersResponse, ticketsResponse] = await Promise.all([
         axios.get(`http://${IP}:3000/api/admin/tasks`, {
           headers: { Authorization: `Bearer ${token}` },
           timeout: 10000,
@@ -198,10 +236,6 @@ const HomeScreen = () => {
           headers: { Authorization: `Bearer ${token}` },
           timeout: 10000,
         }).catch(error => ({ data: { students: [], faculty: [] } })),
-        axios.get(`http://${IP}:3000/api/admin/attendance`, {
-          headers: { Authorization: `Bearer ${token}` },
-          timeout: 10000,
-        }).catch(error => ({ data: [] })),
         axios.get(`http://${IP}:3000/api/admin/tickets`, {
           headers: { Authorization: `Bearer ${token}` },
           timeout: 10000,
@@ -211,10 +245,6 @@ const HomeScreen = () => {
       const totalTasks = tasksResponse.data.length || 0;
       const totalStudents = usersResponse.data.students?.length || 0;
       const totalFaculty = usersResponse.data.faculty?.length || 0;
-      const attendanceRecords = attendanceResponse.data || [];
-      const presentCount = attendanceRecords.filter(record => record.status === 'Present').length;
-      const totalClasses = attendanceRecords.length;
-      const attendancePercentage = totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0;
       const totalUsers = (totalStudents + totalFaculty) || 0;
       const totalTickets = ticketsResponse.data.length || 0;
 
@@ -222,7 +252,6 @@ const HomeScreen = () => {
         totalTasks,
         totalStudents,
         totalFaculty,
-        attendancePercentage,
         totalUsers,
         totalTickets,
       });
@@ -233,50 +262,48 @@ const HomeScreen = () => {
     }
   };
 
-  const changeBackgroundColor = () => {
-    const currentIndex = COLOR_PALETTE.indexOf(backgroundColor);
-    const nextIndex = (currentIndex + 1) % COLOR_PALETTE.length;
-    setBackgroundColor(COLOR_PALETTE[nextIndex]);
-  };
-
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor }]}>
+      <View style={[styles.container]}>
         <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, { backgroundColor }]}>
+    <ScrollView contentContainerStyle={[styles.container]}>
       <Animatable.View animation="fadeInDown" duration={1000} style={styles.overviewContainer}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Dashboard Overview</Text>
-          <TouchableOpacity onPress={changeBackgroundColor} style={styles.colorPickerButton}>
-            <MaterialIcons name="color-lens" size={24} color="#3b82f6" />
-          </TouchableOpacity>
+        <View style={styles.sectionHeaderAdvanced}>
+          <MaterialIcons name="dashboard" size={28} color="#3b82f6" />
+          <Text style={styles.sectionTitleAdvanced}>Dashboard Overview</Text>
         </View>
-        <View style={styles.overviewGrid}>
-          {[
-            { name: 'Tasks', count: overview.totalTasks, icon: 'assignment', navigateTo: 'Tasks' },
-            { name: 'Students', count: overview.totalStudents, icon: 'school', navigateTo: 'Users' },
-            { name: 'Faculty', count: overview.totalFaculty, icon: 'people', navigateTo: 'Users' },
-            { name: 'Attendance', count: `${overview.attendancePercentage}%`, icon: 'calendar-today', action: () => Alert.alert('Info', 'Attendance overview is shown here.') },
-            { name: 'Users', count: overview.totalUsers, icon: 'group', navigateTo: 'Users' },
-            { name: 'Tickets', count: overview.totalTickets, icon: 'confirmation-number', navigateTo: 'Tickets' },
-          ].map((item, index) => (
+        <View style={styles.overviewGridAdvanced}>
+          {DASHBOARD_CARDS.map((item, index) => (
             <Animatable.View
               key={item.name}
-              animation="zoomIn"
-              delay={index * 200}
-              style={styles.overviewButton}
+              animation="fadeInUp"
+              delay={index * 120}
+              style={styles.advancedCardShadow}
             >
               <TouchableOpacity
-                style={styles.overviewButtonInner}
-                onPress={() => item.navigateTo ? navigation.navigate(item.navigateTo) : item.action()}
+                activeOpacity={0.85}
+                style={styles.advancedCardTouchable}
+                onPress={() => item.navigateTo ? navigation.navigate(item.navigateTo) : null}
               >
-                <MaterialIcons name={item.icon} size={28} color="#ffffff" />
-                <Text style={styles.overviewButtonText}>{`${item.name}: ${item.count}`}</Text>
+                <LinearGradient
+                  colors={item.color}
+                  start={[0, 0]}
+                  end={[1, 1]}
+                  style={styles.advancedCard}
+                >
+                  <View style={styles.advancedCardIconCircle}>
+                    <MaterialIcons name={item.icon} size={32} color="#fff" />
+                  </View>
+                  <Text style={styles.advancedCardTitle}>{item.name}</Text>
+                  <Text style={styles.advancedCardValue}>
+                    {overview[item.key]}
+                  </Text>
+                </LinearGradient>
               </TouchableOpacity>
             </Animatable.View>
           ))}
@@ -296,7 +323,6 @@ const HomeScreen = () => {
 const UsersScreen = () => {
   const [users, setUsers] = useState({ students: [], faculty: [] });
   const [isLoading, setIsLoading] = useState(false);
-  const [backgroundColor, setBackgroundColor] = useState(COLOR_PALETTE[0]);
   const [error, setError] = useState(null);
   const [errorDialogVisible, setErrorDialogVisible] = useState(false);
 
@@ -358,38 +384,19 @@ const UsersScreen = () => {
     }
   };
 
-  const changeBackgroundColor = () => {
-    const currentIndex = COLOR_PALETTE.indexOf(backgroundColor);
-    const nextIndex = (currentIndex + 1) % COLOR_PALETTE.length;
-    setBackgroundColor(COLOR_PALETTE[nextIndex]);
-  };
-
-  const renderUser = ({ item, section }) => (
-    <Animatable.View animation="fadeInUp" delay={100} style={styles.card}>
-      <Text style={styles.title}>{item.name}</Text>
-      <Text style={styles.detailText}>Email: {item.email}</Text>
-      <Text style={styles.detailText}>Branch: {item.branch}</Text>
-      {section.title === 'Students' && (
-        <Text style={styles.detailText}>
-          Profile Edit: {item.profile_edit ? 'Pending' : 'None'}
-        </Text>
-      )}
-    </Animatable.View>
-  );
-
+  // FIX: Define sections inside the component so it's available for rendering
   const sections = [
     { title: 'Students', data: users.students },
     { title: 'Faculty', data: users.faculty },
   ];
 
+  // FIX: Remove ScrollView and use SectionList as the top-level container
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Users</Text>
-        <TouchableOpacity onPress={changeBackgroundColor} style={styles.colorPickerButton}>
-          <MaterialIcons name="color-lens" size={24} color="#3b82f6" />
-        </TouchableOpacity>
-      </View>
+    <View style={[styles.container]}>
+      <Animatable.View animation="fadeInDown" duration={800} style={styles.sectionHeaderAdvanced}>
+        <MaterialIcons name="people" size={28} color="#3b82f6" />
+        <Text style={styles.sectionTitleAdvanced}>Users</Text>
+      </Animatable.View>
       {isLoading ? (
         <View style={styles.loader}>
           <ActivityIndicator size="large" color="#3b82f6" />
@@ -398,14 +405,34 @@ const UsersScreen = () => {
         <SectionList
           sections={sections}
           keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
-          renderItem={renderUser}
           renderSectionHeader={({ section: { title } }) => (
-            <Text style={styles.sectionTitle}>{title}</Text>
+            <Text style={styles.sectionSubTitle}>{title}</Text>
+          )}
+          renderItem={({ item, section }) => (
+            <Animatable.View animation="fadeInUp" delay={100} style={styles.advancedListCard}>
+              <View style={styles.advancedListIconCircle}>
+                <MaterialIcons
+                  name={section.title === 'Students' ? 'school' : 'person'}
+                  size={24}
+                  color="#3b82f6"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.advancedListTitle}>{item.name}</Text>
+                <Text style={styles.advancedListDetail}>Email: {item.email}</Text>
+                <Text style={styles.advancedListDetail}>Branch: {item.branch}</Text>
+                {section.title === 'Students' && (
+                  <Text style={styles.advancedListDetail}>
+                    Profile Edit: {item.profile_edit ? 'Pending' : 'None'}
+                  </Text>
+                )}
+              </View>
+            </Animatable.View>
           )}
           ListEmptyComponent={<Text style={styles.emptyText}>No users available</Text>}
+          contentContainerStyle={{ paddingBottom: 24 }}
         />
       )}
-      
       <EnhancedErrorDialog
         visible={errorDialogVisible}
         error={error}
@@ -421,7 +448,6 @@ const TasksScreen = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [backgroundColor, setBackgroundColor] = useState(COLOR_PALETTE[0]);
   const [error, setError] = useState(null);
   const [errorDialogVisible, setErrorDialogVisible] = useState(false);
 
@@ -478,12 +504,6 @@ const TasksScreen = () => {
     }
   };
 
-  const changeBackgroundColor = () => {
-    const currentIndex = COLOR_PALETTE.indexOf(backgroundColor);
-    const nextIndex = (currentIndex + 1) % COLOR_PALETTE.length;
-    setBackgroundColor(COLOR_PALETTE[nextIndex]);
-  };
-
   const renderTask = ({ item }) => (
     <Animatable.View animation="fadeInUp" delay={100} style={styles.card}>
       <TouchableOpacity
@@ -502,14 +522,13 @@ const TasksScreen = () => {
     </Animatable.View>
   );
 
+  // FIX: Remove ScrollView and use FlatList as the top-level container
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Tasks</Text>
-        <TouchableOpacity onPress={changeBackgroundColor} style={styles.colorPickerButton}>
-          <MaterialIcons name="color-lens" size={24} color="#3b82f6" />
-        </TouchableOpacity>
-      </View>
+    <View style={[styles.container]}>
+      <Animatable.View animation="fadeInDown" duration={800} style={styles.sectionHeaderAdvanced}>
+        <MaterialIcons name="assignment" size={28} color="#3b82f6" />
+        <Text style={styles.sectionTitleAdvanced}>Tasks</Text>
+      </Animatable.View>
       {isLoading ? (
         <View style={styles.loader}>
           <ActivityIndicator size="large" color="#3b82f6" />
@@ -517,9 +536,33 @@ const TasksScreen = () => {
       ) : (
         <FlatList
           data={tasks}
-          renderItem={renderTask}
+          renderItem={({ item }) => (
+            <Animatable.View animation="fadeInUp" delay={100} style={styles.advancedListCard}>
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedTask(item);
+                  setModalVisible(true);
+                }}
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                activeOpacity={0.85}
+              >
+                <View style={styles.advancedListIconCircle}>
+                  <MaterialIcons name="assignment" size={24} color="#3b82f6" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.advancedListTitle}>{item.title}</Text>
+                  <Text style={styles.advancedListDetail}>Due: {new Date(item.due_date).toLocaleDateString()}</Text>
+                  <Text style={[styles.advancedListDetail, { color: item.status === 'completed' ? '#22c55e' : '#ef4444' }]}>
+                    Status: {item.status}
+                  </Text>
+                  <Text style={styles.advancedListDetail}>Assigned To: {item.assigned_to} ({item.role})</Text>
+                </View>
+              </TouchableOpacity>
+            </Animatable.View>
+          )}
           keyExtractor={item => item.id.toString()}
           ListEmptyComponent={<Text style={styles.emptyText}>No tasks available</Text>}
+          contentContainerStyle={{ paddingBottom: 24 }}
         />
       )}
       <Modal
@@ -559,7 +602,34 @@ const TicketsScreen = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [backgroundColor, setBackgroundColor] = useState(COLOR_PALETTE[0]);
+  const [error, setError] = useState(null);
+  const [errorDialogVisible, setErrorDialogVisible] = useState(false);
+
+  // Enhanced error handling function
+  const handleError = (error, customMessage = null) => {
+    console.error('Tasks Screen Error:', error);
+    setError({
+      ...error,
+      customMessage,
+      isSuccess: false
+    });
+    setErrorDialogVisible(true);
+  };
+
+  // Success message function
+  const handleSuccess = (message) => {
+    setError({
+      customMessage: message,
+      isSuccess: true
+    });
+    setErrorDialogVisible(true);
+  };
+
+  // Close error dialog
+  const closeErrorDialog = () => {
+    setErrorDialogVisible(false);
+    setError(null);
+  };
 
   useEffect(() => {
     fetchTickets();
@@ -616,12 +686,6 @@ const TicketsScreen = () => {
     }
   };
 
-  const changeBackgroundColor = () => {
-    const currentIndex = COLOR_PALETTE.indexOf(backgroundColor);
-    const nextIndex = (currentIndex + 1) % COLOR_PALETTE.length;
-    setBackgroundColor(COLOR_PALETTE[nextIndex]);
-  };
-
   const renderTicket = ({ item }) => (
     <Animatable.View animation="fadeInUp" delay={100} style={styles.card}>
       <TouchableOpacity
@@ -640,14 +704,13 @@ const TicketsScreen = () => {
     </Animatable.View>
   );
 
+  // FIX: Remove ScrollView and use FlatList as the top-level container
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Tickets</Text>
-        <TouchableOpacity onPress={changeBackgroundColor} style={styles.colorPickerButton}>
-          <MaterialIcons name="color-lens" size={24} color="#3b82f6" />
-        </TouchableOpacity>
-      </View>
+    <View style={[styles.container]}>
+      <Animatable.View animation="fadeInDown" duration={800} style={styles.sectionHeaderAdvanced}>
+        <MaterialIcons name="confirmation-number" size={28} color="#3b82f6" />
+        <Text style={styles.sectionTitleAdvanced}>Tickets</Text>
+      </Animatable.View>
       {isLoading ? (
         <View style={styles.loader}>
           <ActivityIndicator size="large" color="#3b82f6" />
@@ -655,16 +718,43 @@ const TicketsScreen = () => {
       ) : (
         <FlatList
           data={tickets}
-          renderItem={renderTicket}
+          renderItem={({ item }) => (
+            <Animatable.View animation="fadeInUp" delay={100} style={styles.advancedListCard}>
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedTicket(item);
+                  setModalVisible(true);
+                }}
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                activeOpacity={0.85}
+              >
+                <View style={styles.advancedListIconCircle}>
+                  <MaterialIcons name="confirmation-number" size={24} color="#3b82f6" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.advancedListTitle}>{item.subject}</Text>
+                  <Text style={styles.advancedListDetail}>Raised By: {item.raised_by_name} ({item.role})</Text>
+                  <Text style={[
+                    styles.advancedListDetail,
+                    { color: item.status === 'closed' || item.status === 'completed' ? '#22c55e' : item.status === 'pending' ? '#f59e0b' : '#ef4444' }
+                  ]}>
+                    Status: {item.status}
+                  </Text>
+                  <Text style={styles.advancedListDetail}>Type: {item.type || 'General'}</Text>
+                </View>
+              </TouchableOpacity>
+            </Animatable.View>
+          )}
           keyExtractor={item => item.id.toString()}
           ListEmptyComponent={<Text style={styles.emptyText}>No tickets available</Text>}
+          contentContainerStyle={{ paddingBottom: 24 }}
         />
       )}
       <Modal
         animationType="fade"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => setOverview(false)}
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <Animatable.View animation="zoomIn" style={styles.modalView}>
@@ -724,14 +814,11 @@ const TicketsScreen = () => {
   );
 };
 
-
-
 // Profile Screen Component
 const ProfileScreen = () => {
   const navigation = useNavigation();
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [backgroundColor, setBackgroundColor] = useState(COLOR_PALETTE[0]);
 
   useEffect(() => {
     fetchProfile();
@@ -795,29 +882,21 @@ const ProfileScreen = () => {
     }
   };
 
-  const changeBackgroundColor = () => {
-    const currentIndex = COLOR_PALETTE.indexOf(backgroundColor);
-    const nextIndex = (currentIndex + 1) % COLOR_PALETTE.length;
-    setBackgroundColor(COLOR_PALETTE[nextIndex]);
-  };
-
+  // FIX: Remove ScrollView and use View as the top-level container
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor }]}>
+      <View style={[styles.container]}>
         <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor }]}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Admin Profile</Text>
-        <TouchableOpacity onPress={changeBackgroundColor} style={styles.colorPickerButton}>
-          <MaterialIcons name="color-lens" size={24} color="#3b82f6" />
-        </TouchableOpacity>
-      </View>
-      
+    <View style={[styles.container]}>
+      <Animatable.View animation="fadeInDown" duration={800} style={styles.sectionHeaderAdvanced}>
+        <MaterialIcons name="person" size={28} color="#3b82f6" />
+        <Text style={styles.sectionTitleAdvanced}>Admin Profile</Text>
+      </Animatable.View>
       <Animatable.View animation="fadeInUp" style={styles.profileCard}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
@@ -854,9 +933,9 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
       </Animatable.View>
-    </ScrollView>
+    </View>
   );
-};
+}
 
 // Main AdminDashboard Component
 const AdminDashboard = () => {
@@ -1014,7 +1093,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   profileCard: {
     backgroundColor: 'white',
@@ -1131,39 +1210,82 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
   },
-  overviewGrid: {
+  // --- Advanced UI/UX styles ---
+  sectionHeaderAdvanced: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 18,
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  sectionTitleAdvanced: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#3b82f6',
+    marginLeft: 10,
+    letterSpacing: 0.5,
+  },
+  overviewGridAdvanced: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 12,
   },
-  overviewButton: {
+  advancedCardShadow: {
     width: '48%',
-    marginBottom: 12,
+    marginBottom: 18,
+    borderRadius: 18,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.13,
+    shadowRadius: 12,
+    elevation: 7,
+    backgroundColor: 'transparent',
   },
-  overviewButtonInner: {
-    backgroundColor: '#3b82f6',
-    padding: 16,
-    borderRadius: 12,
+  advancedCardTouchable: {
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  advancedCard: {
+    minHeight: 130,
+    borderRadius: 18,
+    padding: 18,
     alignItems: 'center',
-    flexDirection: 'row',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
     elevation: 3,
   },
-  overviewButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 12,
+  advancedCardIconCircle: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 32,
+    width: 54,
+    height: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
-
-  colorPickerButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+  advancedCardTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+    letterSpacing: 0.2,
+    textShadowColor: 'rgba(0,0,0,0.08)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  advancedCardValue: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0,0,0,0.10)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   // Error Modal Styles
   errorModalOverlay: {
@@ -1217,6 +1339,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  sectionSubTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#6366f1',
+    marginTop: 10,
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  advancedListCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 6,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#e0e7ef',
+  },
+  advancedListIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#e0e7ef',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+  },
+  advancedListTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 2,
+  },
+  advancedListDetail: {
+    fontSize: 15,
+    color: '#64748b',
+    marginBottom: 1,
   },
 });
 

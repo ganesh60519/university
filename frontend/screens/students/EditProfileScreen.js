@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Image } from 'react-native';
 import axios from 'axios';
 import { IP } from '../../ip';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
 const EditProfileScreen = () => {
   const navigation = useNavigation();
@@ -13,6 +14,14 @@ const EditProfileScreen = () => {
     name: '',
     email: '',
     branch: '',
+    education: '',
+    skills: '',
+    work_experience: '',
+    projects: '',
+    certifications: '',
+    achievements: '',
+    languages: '',
+    hobbies: '',
     phone: '',
     address: '',
     profile_picture: '',
@@ -26,6 +35,7 @@ const EditProfileScreen = () => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -43,10 +53,18 @@ const EditProfileScreen = () => {
             name: response.data.name || '',
             email: response.data.email || '',
             branch: response.data.branch || '',
+            education: response.data.education || '',
+            skills: response.data.skills || '',
+            work_experience: response.data.work_experience || '',
+            projects: response.data.projects || '',
+            certifications: response.data.certifications || '',
+            achievements: response.data.achievements || '',
+            languages: response.data.languages || '',
+            hobbies: response.data.hobbies || '',
             phone: response.data.phone || '',
             address: response.data.address || '',
             profile_picture: response.data.profile_picture || '',
-            dob: response.data.dob || '',
+            dob: response.data.dob ?? '', // <-- do not use || '', use ?? '' to avoid defaulting to today if dob is null/undefined
             father_name: response.data.father_name || '',
             mother_name: response.data.mother_name || '',
             linkedin_url: response.data.linkedin_url || '',
@@ -103,6 +121,14 @@ const EditProfileScreen = () => {
             name: profile.name.trim(),
             email: profile.email.trim(),
             branch: profile.branch.trim(),
+            education: profile.education,
+            skills: profile.skills,
+            work_experience: profile.work_experience,
+            projects: profile.projects,
+            certifications: profile.certifications,
+            achievements: profile.achievements,
+            languages: profile.languages,
+            hobbies: profile.hobbies,
             phone: profile.phone.trim(),
             address: profile.address.trim(),
             profile_picture: profile.profile_picture.trim(),
@@ -142,6 +168,90 @@ const EditProfileScreen = () => {
 
   const handleCancel = () => {
     navigation.navigate('StudentDashboard');
+  };
+
+  const pickImage = async () => {
+    try {
+      // Request permission to access media library
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission Required', 'Permission to access camera roll is required!');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1], // Square aspect ratio for profile pictures
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        await uploadProfileImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
+
+  const uploadProfileImage = async (imageAsset) => {
+    try {
+      setImageUploading(true);
+      
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      
+      // For React Native, we need to format the file object correctly
+      const fileUri = imageAsset.uri;
+      const fileType = imageAsset.mimeType || imageAsset.type || 'image/jpeg';
+      const fileName = imageAsset.fileName || `profile_${Date.now()}.jpg`;
+      
+      formData.append('profileImage', {
+        uri: fileUri,
+        type: fileType,
+        name: fileName,
+      });
+
+      console.log('Uploading profile image:', { fileUri, fileType, fileName });
+
+      const response = await axios.post(
+        `http://${IP}:3000/api/upload/profile-image`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data.success) {
+        // Update profile state with the new image URL
+        setProfile(prev => ({
+          ...prev,
+          profile_picture: response.data.profileImage.url
+        }));
+        Alert.alert('Success', 'Profile image uploaded successfully!');
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      Alert.alert(
+        'Upload Error', 
+        `Failed to upload image: ${error.response?.data?.error || error.message || 'Unknown error'}`
+      );
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   if (isLoading) {
@@ -266,15 +376,40 @@ const EditProfileScreen = () => {
           {/* Online Presence Section */}
           <Text style={styles.sectionHeader}>Online Presence</Text>
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Profile Picture URL</Text>
-            <TextInput
-              style={styles.input}
-              value={profile.profile_picture}
-              onChangeText={(text) => setProfile({ ...profile, profile_picture: text })}
-              placeholder="Enter profile picture URL"
-              placeholderTextColor="#9ca3af"
-              keyboardType="url"
-            />
+            <Text style={styles.label}>Profile Picture</Text>
+            <View style={styles.imagePickerContainer}>
+              {profile.profile_picture ? (
+                <View style={styles.imagePreviewContainer}>
+                  <Image 
+                    source={{ uri: `http://${IP}:3000${profile.profile_picture}` }} 
+                    style={styles.profileImagePreview}
+                    onError={() => {
+                      // If image fails to load, show placeholder
+                      setProfile(prev => ({ ...prev, profile_picture: '' }));
+                    }}
+                  />
+                  <TouchableOpacity 
+                    style={styles.changeImageButton}
+                    onPress={pickImage}
+                    disabled={imageUploading}
+                  >
+                    <Text style={styles.changeImageButtonText}>
+                      {imageUploading ? 'Uploading...' : 'Change Image'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  style={styles.uploadImageButton}
+                  onPress={pickImage}
+                  disabled={imageUploading}
+                >
+                  <Text style={styles.uploadImageButtonText}>
+                    {imageUploading ? 'Uploading...' : '📷 Upload Profile Picture'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
@@ -450,6 +585,50 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  imagePickerContainer: {
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  imagePreviewContainer: {
+    alignItems: 'center',
+  },
+  profileImagePreview: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#e5e7eb',
+    marginBottom: 12,
+  },
+  changeImageButton: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  changeImageButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  uploadImageButton: {
+    backgroundColor: '#f3f4f6',
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100,
+  },
+  uploadImageButtonText: {
+    color: '#6b7280',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 

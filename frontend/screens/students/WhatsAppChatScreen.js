@@ -19,14 +19,13 @@ import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-import { IP } from '../../ip';
+import { IP } from '../../ip'; // Ensure this file exists and exports a valid IP address
 
 const { width } = Dimensions.get('window');
 
 const WhatsAppChatScreen = ({ navigation }) => {
   const [faculty, setFaculty] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState('');
-
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -328,14 +327,12 @@ const WhatsAppChatScreen = ({ navigation }) => {
       {/* WhatsApp-style Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chats</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton}>
-            <MaterialIcons name="search" size={24} color="#ffffff" />
-          </TouchableOpacity>
+        {/* Removed headerActions (three-dot icon) */}
+        {/* <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerButton}>
             <MaterialIcons name="more-vert" size={24} color="#ffffff" />
           </TouchableOpacity>
-        </View>
+        </View> */}
       </View>
 
       {/* Faculty Selection */}
@@ -414,7 +411,8 @@ const WhatsAppChatScreen = ({ navigation }) => {
               </View>
             </View>
 
-            <View style={styles.chatHeaderActions}>
+            {/* Removed chatHeaderActions (video, call, more-vert) */}
+            {/* <View style={styles.chatHeaderActions}>
               <TouchableOpacity style={styles.chatHeaderButton}>
                 <MaterialIcons name="videocam" size={24} color="#ffffff" />
               </TouchableOpacity>
@@ -424,7 +422,7 @@ const WhatsAppChatScreen = ({ navigation }) => {
               <TouchableOpacity style={styles.chatHeaderButton}>
                 <MaterialIcons name="more-vert" size={24} color="#ffffff" />
               </TouchableOpacity>
-            </View>
+            </View> */}
           </View>
 
           {/* Messages List */}
@@ -578,7 +576,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-
   chatModal: {
     flex: 1,
     backgroundColor: '#e5ddd5',

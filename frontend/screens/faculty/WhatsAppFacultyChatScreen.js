@@ -21,6 +21,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { IP } from '../../ip';
 import SocketService from '../../services/SocketService';
 import ErrorDialog from '../../components/ErrorDialog';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Animatable from 'react-native-animatable';
 
 const { width } = Dimensions.get('window');
 
@@ -126,7 +128,16 @@ const WhatsAppFacultyChatScreen = ({ navigation }) => {
       
       SocketService.onNewMessage((messageData) => {
         if (currentRoom && messageData.roomId === (currentRoom.room_id || currentRoom.id)) {
-          setMessages(prev => [...prev, messageData]);
+          // Remove any temp message with same content and sender before adding the new message
+          setMessages(prev => [
+            ...prev.filter(
+              msg =>
+                !msg.temp ||
+                msg.message !== messageData.message ||
+                msg.sender_type !== messageData.sender_type
+            ),
+            messageData
+          ]);
           scrollToBottom();
         }
         // Refresh chat rooms to update last message
@@ -270,9 +281,8 @@ const WhatsAppFacultyChatScreen = ({ navigation }) => {
         messageText,
         'text'
       );
-      
-      // Remove temp message after successful send
-      setMessages(prev => prev.filter(msg => !msg.temp));
+      // Do NOT remove temp message here; let the socket event handle it
+      // setMessages(prev => prev.filter(msg => !msg.temp));
     } catch (error) {
       console.error('Error sending message:', error);
       handleError(error, 'Failed to send message');
@@ -660,78 +670,92 @@ const WhatsAppFacultyChatScreen = ({ navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
-      {/* WhatsApp-style Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Faculty Chats</Text>
-        <View style={styles.headerActions}>
+    <View style={{ flex: 1 }}>
+      {/* Gradient background */}
+      <LinearGradient
+        colors={['#e8f5e9', '#ffffff']}
+        style={styles.gradientBackground}
+      >
+        {/* WhatsApp-style Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Faculty Chats</Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={styles.headerButton}
+              onPress={() => setBroadcastModalVisible(true)}
+            >
+              <MaterialIcons name="campaign" size={24} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
           <TouchableOpacity 
-            style={styles.headerButton}
-            onPress={() => setBroadcastModalVisible(true)}
+            style={[styles.tab, activeTab === 'CHATS' && styles.activeTab]}
+            onPress={() => setActiveTab('CHATS')}
           >
-            <MaterialIcons name="campaign" size={24} color="#ffffff" />
+            <Text style={[styles.tabText, activeTab === 'CHATS' && styles.activeTabText]}>CHATS</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton}>
-            <MaterialIcons name="search" size={24} color="#ffffff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton}>
-            <MaterialIcons name="more-vert" size={24} color="#ffffff" />
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'STUDENTS' && styles.activeTab]}
+            onPress={() => setActiveTab('STUDENTS')}
+          >
+            <Text style={[styles.tabText, activeTab === 'STUDENTS' && styles.activeTabText]}>STUDENTS</Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Tab Navigation */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'CHATS' && styles.activeTab]}
-          onPress={() => setActiveTab('CHATS')}
+        {/* Content Area */}
+        {activeTab === 'CHATS' ? (
+          <FlatList
+            data={chatRooms}
+            renderItem={({ item, index }) => (
+              <Animatable.View animation="fadeInUp" delay={index * 60} style={styles.chatCardShadow}>
+                {renderChatItem({ item })}
+              </Animatable.View>
+            )}
+            keyExtractor={(item, index) => item?.room_id ? item.room_id.toString() : (item?.id ? item.id.toString() : `chat-${index}`)}
+            style={styles.chatList}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <MaterialIcons name="chat-bubble-outline" size={80} color="#bdc3c7" />
+                <Text style={styles.emptyTitle}>No chats yet</Text>
+                <Text style={styles.emptyText}>Start a conversation with a student to see chats here</Text>
+              </View>
+            }
+            contentContainerStyle={{ paddingBottom: 80 }}
+          />
+        ) : (
+          <FlatList
+            data={students}
+            renderItem={({ item, index }) => (
+              <Animatable.View animation="fadeInUp" delay={index * 60} style={styles.chatCardShadow}>
+                {renderStudentItem({ item })}
+              </Animatable.View>
+            )}
+            keyExtractor={(item, index) => item?.id ? item.id.toString() : `student-${index}`}
+            style={styles.chatList}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <MaterialIcons name="school" size={80} color="#bdc3c7" />
+                <Text style={styles.emptyTitle}>No students found</Text>
+                <Text style={styles.emptyText}>Students will appear here when available</Text>
+              </View>
+            }
+            contentContainerStyle={{ paddingBottom: 80 }}
+          />
+        )}
+
+        {/* Floating Action Button for Broadcast */}
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setBroadcastModalVisible(true)}
         >
-          <Text style={[styles.tabText, activeTab === 'CHATS' && styles.activeTabText]}>CHATS</Text>
+          <MaterialIcons name="campaign" size={28} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'STUDENTS' && styles.activeTab]}
-          onPress={() => setActiveTab('STUDENTS')}
-        >
-          <Text style={[styles.tabText, activeTab === 'STUDENTS' && styles.activeTabText]}>STUDENTS</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Content Area */}
-      {activeTab === 'CHATS' ? (
-        /* Chat List */
-        <FlatList
-          data={chatRooms}
-          renderItem={renderChatItem}
-          keyExtractor={(item, index) => item?.room_id ? item.room_id.toString() : (item?.id ? item.id.toString() : `chat-${index}`)}
-          style={styles.chatList}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="chat-bubble-outline" size={80} color="#bdc3c7" />
-              <Text style={styles.emptyTitle}>No chats yet</Text>
-              <Text style={styles.emptyText}>Start a conversation with a student to see chats here</Text>
-            </View>
-          }
-        />
-      ) : (
-        /* Students List */
-        <FlatList
-          data={students}
-          renderItem={renderStudentItem}
-          keyExtractor={(item, index) => item?.id ? item.id.toString() : `student-${index}`}
-          style={styles.chatList}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="school" size={80} color="#bdc3c7" />
-              <Text style={styles.emptyTitle}>No students found</Text>
-              <Text style={styles.emptyText}>Students will appear here when available</Text>
-            </View>
-          }
-        />
-      )}
-
-
+      </LinearGradient>
 
       {/* Chat Modal */}
       <Modal
@@ -740,101 +764,96 @@ const WhatsAppFacultyChatScreen = ({ navigation }) => {
         visible={chatModalVisible}
         onRequestClose={() => setChatModalVisible(false)}
       >
-        <KeyboardAvoidingView 
-          style={styles.chatModal}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <LinearGradient
+          colors={['#e8f5e9', '#ffffff']}
+          style={{ flex: 1 }}
         >
-          {/* Chat Header */}
-          <View style={styles.chatHeader}>
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => setChatModalVisible(false)}
-            >
-              <MaterialIcons name="arrow-back" size={24} color="#ffffff" />
-            </TouchableOpacity>
-            
-            <View style={styles.chatHeaderInfo}>
-              <View style={[styles.chatAvatar, { backgroundColor: getAvatarColor(currentRoom?.student_name || '') }]}>
-                <Text style={styles.chatAvatarText}>
-                  {currentRoom?.student_name ? currentRoom.student_name.charAt(0).toUpperCase() : 'S'}
-                </Text>
-              </View>
-              <View style={styles.chatHeaderText}>
-                <Text style={styles.chatHeaderName}>{currentRoom?.student_name}</Text>
-                <Text style={styles.chatHeaderStatus}>
-                  {typingUsers.length > 0 ? 'typing...' : 'Student'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.chatHeaderActions}>
-              <TouchableOpacity style={styles.chatHeaderButton}>
-                <MaterialIcons name="videocam" size={24} color="#ffffff" />
+          <KeyboardAvoidingView 
+            style={styles.chatModal}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            {/* Chat Header */}
+            <View style={styles.chatHeader}>
+              <TouchableOpacity 
+                style={styles.backButton}
+                onPress={() => setChatModalVisible(false)}
+              >
+                <MaterialIcons name="arrow-back" size={24} color="#ffffff" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.chatHeaderButton}>
-                <MaterialIcons name="call" size={24} color="#ffffff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.chatHeaderButton}>
-                <MaterialIcons name="more-vert" size={24} color="#ffffff" />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Messages List */}
-          <View style={styles.messagesContainer}>
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              renderItem={renderMessage}
-              keyExtractor={(item, index) => item?.id ? item.id.toString() : `msg-${index}`}
-              style={styles.messagesList}
-              showsVerticalScrollIndicator={false}
-              onContentSizeChange={scrollToBottom}
-              ListEmptyComponent={
-                <View style={styles.emptyMessagesContainer}>
-                  <MaterialIcons name="chat" size={60} color="#bdc3c7" />
-                  <Text style={styles.emptyMessagesText}>Start your conversation</Text>
+              <View style={styles.chatHeaderInfo}>
+                <View style={[styles.chatAvatar, { backgroundColor: getAvatarColor(currentRoom?.student_name || '') }]}>
+                  <Text style={styles.chatAvatarText}>
+                    {currentRoom?.student_name ? currentRoom.student_name.charAt(0).toUpperCase() : 'S'}
+                  </Text>
                 </View>
-              }
-            />
-          </View>
+                <View style={styles.chatHeaderText}>
+                  <Text style={styles.chatHeaderName}>{currentRoom?.student_name}</Text>
+                  <Text style={styles.chatHeaderStatus}>
+                    {typingUsers.length > 0 ? 'typing...' : 'Student'}
+                  </Text>
+                </View>
+              </View>
+            </View>
 
-          {/* Message Input */}
-          <View style={styles.inputContainer}>
-            <View style={styles.inputRow}>
-              <TouchableOpacity style={styles.attachButton} onPress={pickImage}>
-                <MaterialIcons name="attach-file" size={24} color="#25d366" />
-              </TouchableOpacity>
-              
-              <View style={styles.textInputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Type a message"
-                  placeholderTextColor="#999"
-                  value={newMessage}
-                  onChangeText={handleTyping}
-                  multiline
-                  maxLength={1000}
-                />
-                <TouchableOpacity style={styles.emojiButton}>
-                  <MaterialIcons name="emoji-emotions" size={24} color="#999" />
+            {/* Messages List */}
+            <View style={styles.messagesContainer}>
+              <FlatList
+                ref={flatListRef}
+                data={messages}
+                renderItem={({ item, index }) => (
+                  <Animatable.View animation="fadeInUp" delay={index * 30}>
+                    {renderMessage({ item, index })}
+                  </Animatable.View>
+                )}
+                keyExtractor={(item, index) => item?.id ? item.id.toString() : `msg-${index}`}
+                style={styles.messagesList}
+                showsVerticalScrollIndicator={false}
+                onContentSizeChange={scrollToBottom}
+                ListEmptyComponent={
+                  <View style={styles.emptyMessagesContainer}>
+                    <MaterialIcons name="chat" size={60} color="#bdc3c7" />
+                    <Text style={styles.emptyMessagesText}>Start your conversation</Text>
+                  </View>
+                }
+                contentContainerStyle={{ paddingBottom: 16 }}
+              />
+            </View>
+
+            {/* Message Input */}
+            <View style={styles.inputContainerModern}>
+              <View style={styles.inputRowModern}>
+                <TouchableOpacity style={styles.attachButtonModern} onPress={pickImage}>
+                  <MaterialIcons name="attach-file" size={24} color="#25d366" />
+                </TouchableOpacity>
+                <View style={styles.textInputContainerModern}>
+                  <TextInput
+                    style={styles.textInputModern}
+                    placeholder="Type a message"
+                    placeholderTextColor="#999"
+                    value={newMessage}
+                    onChangeText={handleTyping}
+                    multiline
+                    maxLength={1000}
+                  />
+                  <TouchableOpacity style={styles.emojiButtonModern}>
+                    <MaterialIcons name="emoji-emotions" size={24} color="#999" />
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity 
+                  style={[styles.sendButtonModern, (!newMessage.trim() || sendingMessage) && styles.sendButtonDisabledModern]}
+                  onPress={sendMessage}
+                  disabled={!newMessage.trim() || sendingMessage}
+                >
+                  {sendingMessage ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <MaterialIcons name="send" size={24} color="#ffffff" />
+                  )}
                 </TouchableOpacity>
               </View>
-              
-              <TouchableOpacity 
-                style={[styles.sendButton, (!newMessage.trim() || sendingMessage) && styles.sendButtonDisabled]}
-                onPress={sendMessage}
-                disabled={!newMessage.trim() || sendingMessage}
-              >
-                {sendingMessage ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  <MaterialIcons name="send" size={24} color="#ffffff" />
-                )}
-              </TouchableOpacity>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </LinearGradient>
       </Modal>
 
       {/* Broadcast Modal */}
@@ -1054,10 +1073,10 @@ const styles = StyleSheet.create({
   },
   chatItem: {
     flexDirection: 'row',
-    padding: 15,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    padding: 18,
+    backgroundColor: 'transparent', // Let chatCardShadow color show
+    borderBottomWidth: 0,           // Remove border
+    alignItems: 'center',
   },
   unreadChatItem: {
     backgroundColor: '#f8f9fa',
@@ -1246,12 +1265,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#b3e5d1',
   },
-  chatHeaderActions: {
-    flexDirection: 'row',
-  },
-  chatHeaderButton: {
-    marginLeft: 20,
-  },
   messagesContainer: {
     flex: 1,
     paddingHorizontal: 10,
@@ -1296,14 +1309,29 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    position: 'relative',
+    marginBottom: 2,
   },
   ownBubble: {
     backgroundColor: '#dcf8c6',
     borderBottomRightRadius: 4,
+    // Bubble tail
+    marginRight: 8,
+    shadowColor: '#25d366',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    elevation: 2,
   },
   otherBubble: {
     backgroundColor: '#ffffff',
     borderBottomLeftRadius: 4,
+    marginLeft: 8,
+    shadowColor: '#25d366',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 3,
+    elevation: 1,
   },
   tempMessage: {
     opacity: 0.7,
@@ -1566,6 +1594,89 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     color: '#999',
+  },
+  gradientBackground: {
+    flex: 1,
+  },
+  chatCardShadow: {
+    backgroundColor: '#f5f7fa', // Changed from white to a soft blue-gray
+    borderRadius: 22,           // More rounded corners
+    marginVertical: 10,
+    marginHorizontal: 12,
+    shadowColor: '#7b61ff',     // Soft purple shadow
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.13,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#e0e7ef',
+  },
+  // Modern input bar
+  inputContainerModern: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderTopWidth: 0,
+    shadowColor: '#25d366',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  inputRowModern: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    shadowColor: '#25d366',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  attachButtonModern: {
+    padding: 8,
+    marginRight: 4,
+  },
+  textInputContainerModern: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 25,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 6,
+    maxHeight: 100,
+  },
+  textInputModern: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    maxHeight: 80,
+    backgroundColor: 'transparent',
+  },
+  emojiButtonModern: {
+    padding: 4,
+    marginLeft: 6,
+  },
+  sendButtonModern: {
+    backgroundColor: '#25d366',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#25d366',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+  },
+  sendButtonDisabledModern: {
+    backgroundColor: '#ccc',
   },
 });
 

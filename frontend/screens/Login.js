@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
 import { IP } from '../ip';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -59,84 +60,87 @@ const Login = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Welcome</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        style={styles.container}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.card}>
+            <Text style={styles.title}>Welcome</Text>
+            <Text style={styles.subtitle}>Sign in to continue</Text>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>User Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              editable={!loading}
-              placeholderTextColor="#94a3b8"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>User Name</Text>
               <TextInput
-                style={styles.passwordInput}
-                placeholder="Enter your password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!isPasswordVisible}
+                style={styles.input}
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
                 editable={!loading}
                 placeholderTextColor="#94a3b8"
               />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!isPasswordVisible}
+                  editable={!loading}
+                  placeholderTextColor="#94a3b8"
+                />
+                <TouchableOpacity
+                  onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                  disabled={loading}
+                >
+                  <Text style={styles.toggleText}>
+                    {isPasswordVisible ? 'Hide' : 'Show'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.forgotPassword}
+              onPress={() => navigation.navigate('Forgetpassword')}
+              disabled={loading}
+            >
+              <Text style={styles.linkText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Sign In</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.register}>
+              <Text style={styles.registerText}>Don't have an account? </Text>
               <TouchableOpacity
-                onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                onPress={() => navigation.navigate('Registration')}
                 disabled={loading}
               >
-                <Text style={styles.toggleText}>
-                  {isPasswordVisible ? 'Hide' : 'Show'}
-                </Text>
+                <Text style={styles.linkText}>Sign Up</Text>
               </TouchableOpacity>
             </View>
           </View>
-
-          <TouchableOpacity
-            style={styles.forgotPassword}
-            onPress={() => navigation.navigate('Forgetpassword')}
-            disabled={loading}
-          >
-            <Text style={styles.linkText}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
-            )}
-          </TouchableOpacity>
-
-          <View style={styles.register}>
-            <Text style={styles.registerText}>Don't have an account? </Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Registration')}
-              disabled={loading}
-            >
-              <Text style={styles.linkText}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 

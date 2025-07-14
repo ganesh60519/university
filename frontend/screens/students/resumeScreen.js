@@ -1,12 +1,11 @@
 ﻿import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, ActivityIndicator, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, ActivityIndicator, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as Print from 'expo-print';
-import * as MediaLibrary from 'expo-media-library';
 import { MaterialIcons } from '@expo/vector-icons';
 import { IP } from '../../ip'; // Assuming IP is exported from a config file
 
@@ -303,7 +302,7 @@ const ResumeScreen = () => {
               </View>
             </View>
 
-            {/* Right Column - Education & Others */}
+            {/* Right Column - Education & Certifications */}
             <View style={[styles.column, { width: '40%', paddingLeft: 15 }]}>
               <View style={styles.section}>
                 <View style={styles.techSectionHeader}>
@@ -314,82 +313,325 @@ const ResumeScreen = () => {
                 </View>
                 {(data?.education || []).map((edu, i) => (
                   <View key={i} style={[styles.itemContainer, { marginBottom: 15 }]}>
-                    <Text style={[styles.itemTitle, { color: '#1e40af', fontSize: 13, fontWeight: '700' }]}>
+                    <Text style={[styles.itemTitle, { color: '#1e40af', fontSize: 14, fontWeight: '700' }]}>
                       {edu.degree}
                     </Text>
-                    <Text style={[styles.itemSubtitle, { color: '#6b7280', fontSize: 11 }]}>
-                      {edu.institute}
+                    <Text style={[styles.itemSubtitle, { color: '#6b7280', fontSize: 12 }]}>
+                      {edu.field}
                     </Text>
-                    <Text style={[styles.itemDetail, { fontSize: 11, color: '#6b7280' }]}>
-                      {edu.year} {edu.grade ? '• ' + edu.grade : ''}
+                    <Text style={[styles.itemDetail, { fontSize: 12 }]}>
+                      {edu.institute} | {edu.year}
+                    </Text>
+                    <Text style={[styles.itemDetail, { fontSize: 12, fontWeight: '600' }]}>
+                      {edu.grade ? `${edu.grade}` : ''}
                     </Text>
                   </View>
                 ))}
               </View>
 
-              {data?.certifications && data.certifications.length > 0 && (
-                <View style={styles.section}>
-                  <View style={styles.techSectionHeader}>
-                    <View style={styles.techSectionAccent} />
-                    <Text style={[styles.sectionTitle, { color: '#1e40af', fontSize: 16 }]}>
-                      CERTIFICATIONS
-                    </Text>
-                  </View>
-                  {data.certifications.map((cert, i) => (
-                    <View key={i} style={[styles.itemContainer, { marginBottom: 10 }]}>
-                      <Text style={[styles.itemTitle, { color: '#1e40af', fontSize: 12, fontWeight: '700' }]}>
+              <View style={styles.section}>
+                <View style={styles.techSectionHeader}>
+                  <View style={styles.techSectionAccent} />
+                  <Text style={[styles.sectionTitle, { color: '#1e40af', fontSize: 16 }]}>
+                    CERTIFICATIONS
+                  </Text>
+                </View>
+                {(data?.certifications || []).map((cert, i) => (
+                  <View key={i} style={[styles.itemContainer, { marginBottom: 12 }]}>
+                    <View style={styles.techCertificationBadge}>
+                      <MaterialIcons name="verified" size={14} color="#3b82f6" />
+                      <Text style={[styles.itemDetail, { marginLeft: 6, fontSize: 12, fontWeight: '600' }]}>
                         {cert.name}
                       </Text>
-                      <Text style={[styles.itemDetail, { fontSize: 10, color: '#6b7280' }]}>
-                        {cert.organization} • {cert.year}
-                      </Text>
                     </View>
-                  ))}
-                </View>
-              )}
-
-              {data?.achievements && data.achievements.length > 0 && (
-                <View style={styles.section}>
-                  <View style={styles.techSectionHeader}>
-                    <View style={styles.techSectionAccent} />
-                    <Text style={[styles.sectionTitle, { color: '#1e40af', fontSize: 16 }]}>
-                      ACHIEVEMENTS
+                    <Text style={[styles.itemDetail, { fontSize: 11, color: '#6b7280' }]}>
+                      {cert.organization} • {cert.year}
                     </Text>
                   </View>
-                  {data.achievements.map((achievement, i) => (
-                    <View key={i} style={[styles.itemContainer, { marginBottom: 8 }]}>
-                      <Text style={[styles.itemDetail, { fontSize: 11, color: '#374151' }]}>
-                        • {achievement}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {data?.languages && data.languages.length > 0 && (
-                <View style={styles.section}>
-                  <View style={styles.techSectionHeader}>
-                    <View style={styles.techSectionAccent} />
-                    <Text style={[styles.sectionTitle, { color: '#1e40af', fontSize: 16 }]}>
-                      LANGUAGES
-                    </Text>
-                  </View>
-                  <View style={styles.languageContainer}>
-                    {data.languages.map((lang, i) => (
-                      <Text key={i} style={[styles.itemDetail, { fontSize: 12, color: '#374151', marginBottom: 3 }]}>
-                        • {lang}
-                      </Text>
-                    ))}
-                  </View>
-                </View>
-              )}
+                ))}
+              </View>
             </View>
           </View>
         </View>
       </View>
     ),
+    // Template 2: Advanced Half-Shaded Professional (Left sidebar with gradient)
+    (data) => (
+      <View style={[styles.resumeCard, { backgroundColor: '#ffffff', flexDirection: 'row', padding: 0 }]}>
+        {/* Left Sidebar - Shaded */}
+        <View style={[styles.halfShadedSidebar, { 
+          width: '38%', 
+          backgroundColor: '#1e293b',
+          background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+          padding: 25,
+          borderTopLeftRadius: 16,
+          borderBottomLeftRadius: 16
+        }]}>
+          <View style={styles.profileSection}>
+            <View style={styles.profileImagePlaceholder}>
+              <MaterialIcons name="person" size={60} color="#ffffff" />
+            </View>
+            <Text style={[styles.name, { fontSize: 24, color: '#ffffff', textAlign: 'center', marginTop: 15 }]}>
+              {data?.name}
+            </Text>
+            <Text style={[styles.role, { fontSize: 16, color: '#94a3b8', textAlign: 'center', marginBottom: 20 }]}>
+              {data?.branch}
+            </Text>
+          </View>
 
-    // Template 2: Executive Professional (Premium Design)
+          <View style={styles.sidebarSection}>
+            <Text style={[styles.sidebarSectionTitle, { color: '#ffffff' }]}>CONTACT</Text>
+            <View style={styles.contactItem}>
+              <MaterialIcons name="email" size={16} color="#94a3b8" />
+              <Text style={styles.sidebarText}>{data?.email}</Text>
+            </View>
+            <View style={styles.contactItem}>
+              <MaterialIcons name="phone" size={16} color="#94a3b8" />
+              <Text style={styles.sidebarText}>{data?.phone}</Text>
+            </View>
+            <View style={styles.contactItem}>
+              <MaterialIcons name="link" size={16} color="#94a3b8" />
+              <Text style={styles.sidebarText}>{data?.linkedin_url}</Text>
+            </View>
+          </View>
+
+          <View style={styles.sidebarSection}>
+            <Text style={[styles.sidebarSectionTitle, { color: '#ffffff' }]}>SKILLS</Text>
+            {(data?.skills || []).slice(0, 8).map((skill, i) => (
+              <View key={i} style={styles.skillProgressBar}>
+                <Text style={styles.sidebarText}>{skill}</Text>
+                <View style={styles.progressBarContainer}>
+                  <View style={[styles.progressBar, { width: `${85 + (i % 3) * 5}%` }]} />
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.sidebarSection}>
+            <Text style={[styles.sidebarSectionTitle, { color: '#ffffff' }]}>LANGUAGES</Text>
+            {(data?.languages || []).map((lang, i) => (
+              <Text key={i} style={styles.sidebarText}>• {lang}</Text>
+            ))}
+          </View>
+        </View>
+
+        {/* Right Content Area */}
+        <View style={[styles.halfShadedContent, { width: '62%', padding: 25 }]}>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: '#1e293b', borderBottomColor: '#1e293b' }]}>
+              PROFESSIONAL SUMMARY
+            </Text>
+            <Text style={styles.sectionContent}>{data?.objective}</Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: '#1e293b', borderBottomColor: '#1e293b' }]}>
+              WORK EXPERIENCE
+            </Text>
+            {(data?.work_experience || []).map((exp, i) => (
+              <View key={i} style={styles.itemContainer}>
+                <Text style={[styles.itemTitle, { color: '#1e293b' }]}>{exp.role}</Text>
+                <Text style={[styles.itemSubtitle, { color: '#64748b' }]}>{exp.company} | {exp.duration}</Text>
+                <Text style={styles.itemDetail}>{exp.description}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: '#1e293b', borderBottomColor: '#1e293b' }]}>
+              EDUCATION
+            </Text>
+            {(data?.education || []).map((edu, i) => (
+              <View key={i} style={styles.itemContainer}>
+                <Text style={[styles.itemTitle, { color: '#1e293b' }]}>{edu.degree}, {edu.field}</Text>
+                <Text style={[styles.itemSubtitle, { color: '#64748b' }]}>{edu.institute} | {edu.year}</Text>
+                <Text style={styles.itemDetail}>{edu.grade ? `Grade: ${edu.grade}` : ''}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: '#1e293b', borderBottomColor: '#1e293b' }]}>
+              PROJECTS
+            </Text>
+            {(data?.projects || []).map((proj, i) => (
+              <View key={i} style={styles.itemContainer}>
+                <Text style={[styles.itemTitle, { color: '#1e293b' }]}>{proj.title}</Text>
+                <Text style={styles.itemDetail}>{proj.description}</Text>
+                <Text style={[styles.itemLink, { color: '#1e293b' }]}>
+                  {proj.technologies ? `Technologies: ${proj.technologies}` : ''}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: '#1e293b', borderBottomColor: '#1e293b' }]}>
+              CERTIFICATIONS
+            </Text>
+            {(data?.certifications || []).map((cert, i) => (
+              <View key={i} style={styles.itemContainer}>
+                <Text style={styles.itemDetail}>{cert.name} | {cert.organization} | {cert.year}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    ),
+    // Template 3: Advanced Half-Shaded Creative (Right sidebar with modern design)
+    (data) => (
+      <View style={[styles.resumeCard, { backgroundColor: '#ffffff', flexDirection: 'row', padding: 0 }]}>
+        {/* Left Content Area */}
+        <View style={[styles.halfShadedContent, { width: '62%', padding: 25 }]}>
+          <View style={styles.headerSection}>
+            <Text style={[styles.name, { fontSize: 32, color: '#7c3aed', fontWeight: '800' }]}>
+              {data?.name}
+            </Text>
+            <Text style={[styles.role, { fontSize: 18, color: '#6b7280', fontWeight: '600' }]}>
+              {data?.branch}
+            </Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: '#7c3aed', borderBottomColor: '#7c3aed', fontSize: 16 }]}>
+              PROFESSIONAL SUMMARY
+            </Text>
+            <Text style={styles.sectionContent}>{data?.objective}</Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: '#7c3aed', borderBottomColor: '#7c3aed', fontSize: 16 }]}>
+              WORK EXPERIENCE
+            </Text>
+            {(data?.work_experience || []).map((exp, i) => (
+              <View key={i} style={styles.itemContainer}>
+                <Text style={[styles.itemTitle, { color: '#7c3aed' }]}>{exp.role}</Text>
+                <Text style={[styles.itemSubtitle, { color: '#6b7280' }]}>{exp.company} | {exp.duration}</Text>
+                <Text style={styles.itemDetail}>{exp.description}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: '#7c3aed', borderBottomColor: '#7c3aed', fontSize: 16 }]}>
+              EDUCATION
+            </Text>
+            {(data?.education || []).map((edu, i) => (
+              <View key={i} style={styles.itemContainer}>
+                <Text style={[styles.itemTitle, { color: '#7c3aed' }]}>{edu.degree}, {edu.field}</Text>
+                <Text style={[styles.itemSubtitle, { color: '#6b7280' }]}>{edu.institute} | {edu.year}</Text>
+                <Text style={styles.itemDetail}>{edu.grade ? `Grade: ${edu.grade}` : ''}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: '#7c3aed', borderBottomColor: '#7c3aed', fontSize: 16 }]}>
+              PROJECTS
+            </Text>
+            {(data?.projects || []).map((proj, i) => (
+              <View key={i} style={styles.itemContainer}>
+                <Text style={[styles.itemTitle, { color: '#7c3aed' }]}>{proj.title}</Text>
+                <Text style={styles.itemDetail}>{proj.description}</Text>
+                <Text style={[styles.itemLink, { color: '#7c3aed' }]}>
+                  {proj.technologies ? `Technologies: ${proj.technologies}` : ''}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Right Sidebar - Shaded */}
+        <View style={[styles.halfShadedSidebar, { 
+          width: '38%', 
+          backgroundColor: '#f8fafc',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          padding: 25,
+          borderTopRightRadius: 16,
+          borderBottomRightRadius: 16,
+          borderLeftWidth: 4,
+          borderLeftColor: '#7c3aed'
+        }]}>
+          <View style={styles.profileSection}>
+            <View style={[styles.profileImagePlaceholder, { backgroundColor: '#7c3aed' }]}>
+              <MaterialIcons name="person" size={60} color="#ffffff" />
+            </View>
+          </View>
+
+          <View style={styles.sidebarSection}>
+            <Text style={[styles.sidebarSectionTitle, { color: '#7c3aed' }]}>CONTACT INFO</Text>
+            <View style={styles.contactItem}>
+              <MaterialIcons name="email" size={16} color="#7c3aed" />
+              <Text style={[styles.sidebarText, { color: '#374151' }]}>{data?.email}</Text>
+            </View>
+            <View style={styles.contactItem}>
+              <MaterialIcons name="phone" size={16} color="#7c3aed" />
+              <Text style={[styles.sidebarText, { color: '#374151' }]}>{data?.phone}</Text>
+            </View>
+            <View style={styles.contactItem}>
+              <MaterialIcons name="link" size={16} color="#7c3aed" />
+              <Text style={[styles.sidebarText, { color: '#374151' }]}>{data?.linkedin_url}</Text>
+            </View>
+            <View style={styles.contactItem}>
+              <MaterialIcons name="code" size={16} color="#7c3aed" />
+              <Text style={[styles.sidebarText, { color: '#374151' }]}>{data?.github_url}</Text>
+            </View>
+          </View>
+
+          <View style={styles.sidebarSection}>
+            <Text style={[styles.sidebarSectionTitle, { color: '#7c3aed' }]}>CORE SKILLS</Text>
+            {(data?.skills || []).slice(0, 8).map((skill, i) => (
+              <View key={i} style={styles.modernSkillItem}>
+                <Text style={[styles.sidebarText, { color: '#374151', fontWeight: '600' }]}>{skill}</Text>
+                <View style={styles.skillRating}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <MaterialIcons 
+                      key={star} 
+                      name="star" 
+                      size={12} 
+                      color={star <= (4 + (i % 2)) ? '#7c3aed' : '#d1d5db'} 
+                    />
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.sidebarSection}>
+            <Text style={[styles.sidebarSectionTitle, { color: '#7c3aed' }]}>LANGUAGES</Text>
+            {(data?.languages || []).map((lang, i) => (
+              <View key={i} style={styles.languageItem}>
+                <Text style={[styles.sidebarText, { color: '#374151' }]}>{lang}</Text>
+                <View style={styles.languageLevel}>
+                  <View style={[styles.levelDot, { backgroundColor: '#7c3aed' }]} />
+                  <View style={[styles.levelDot, { backgroundColor: '#7c3aed' }]} />
+                  <View style={[styles.levelDot, { backgroundColor: '#7c3aed' }]} />
+                  <View style={[styles.levelDot, { backgroundColor: i % 2 === 0 ? '#7c3aed' : '#d1d5db' }]} />
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.sidebarSection}>
+            <Text style={[styles.sidebarSectionTitle, { color: '#7c3aed' }]}>CERTIFICATIONS</Text>
+            {(data?.certifications || []).map((cert, i) => (
+              <View key={i} style={styles.certificationItem}>
+                <MaterialIcons name="verified" size={16} color="#7c3aed" />
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                  <Text style={[styles.sidebarText, { color: '#374151', fontWeight: '600', fontSize: 12 }]}>
+                    {cert.name}
+                  </Text>
+                  <Text style={[styles.sidebarText, { color: '#6b7280', fontSize: 11 }]}>
+                    {cert.organization} • {cert.year}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    ),
+    // Template 4: Executive Professional (Premium Design)
     (data) => (
       <View style={[styles.resumeCard, { backgroundColor: '#ffffff', padding: 0, overflow: 'hidden' }]}>
         {/* Header with geometric design */}
@@ -437,873 +679,329 @@ const ResumeScreen = () => {
           {/* Professional Summary with accent */}
           <View style={[styles.section, { marginBottom: 30 }]}>
             <View style={styles.executiveSectionHeader}>
-              <View style={styles.executiveSectionAccent} />
-              <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 18, fontWeight: '800', letterSpacing: 0.5 }]}>
+              <View style={styles.sectionAccent} />
+              <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 18, fontWeight: '700' }]}>
                 EXECUTIVE SUMMARY
               </Text>
             </View>
-            <Text style={[styles.sectionContent, { fontSize: 15, lineHeight: 24, color: '#374151', fontWeight: '400' }]}>
+            <Text style={[styles.sectionContent, { fontSize: 15, lineHeight: 24, color: '#374151' }]}>
               {data?.objective}
             </Text>
           </View>
 
-          {/* Core Competencies */}
-          <View style={[styles.section, { marginBottom: 30 }]}>
-            <View style={styles.executiveSectionHeader}>
-              <View style={styles.executiveSectionAccent} />
-              <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 18, fontWeight: '800' }]}>
-                CORE COMPETENCIES
-              </Text>
-            </View>
-            <View style={styles.executiveSkillsGrid}>
-              {(data?.skills || []).slice(0, 15).map((skill, i) => (
-                <View key={i} style={styles.executiveSkillBadge}>
-                  <Text style={styles.executiveSkillText}>{skill}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Professional Experience */}
-          <View style={[styles.section, { marginBottom: 30 }]}>
-            <View style={styles.executiveSectionHeader}>
-              <View style={styles.executiveSectionAccent} />
-              <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 18, fontWeight: '800' }]}>
-                PROFESSIONAL EXPERIENCE
-              </Text>
-            </View>
-            {(data?.work_experience || []).map((exp, i) => (
-              <View key={i} style={[styles.itemContainer, { marginBottom: 25, paddingLeft: 20, borderLeft: '3px solid #e5e7eb' }]}>
-                <Text style={[styles.itemTitle, { color: '#0f172a', fontSize: 17, fontWeight: '800' }]}>
-                  {exp.role}
-                </Text>
-                <Text style={[styles.itemSubtitle, { color: '#6b7280', fontSize: 15, fontWeight: '600' }]}>
-                  {exp.company} | {exp.duration}
-                </Text>
-                <Text style={[styles.itemDetail, { marginTop: 8, lineHeight: 22, fontSize: 14, color: '#374151' }]}>
-                  {exp.description}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Education & Projects in two columns */}
+          {/* Two Column Layout */}
           <View style={styles.executiveTwoColumn}>
-            {/* Left Column - Education */}
-            <View style={[styles.column, { width: '48%', paddingRight: 15 }]}>
+            {/* Left Column */}
+            <View style={[styles.column, { width: '65%', paddingRight: 20 }]}>
               <View style={styles.section}>
                 <View style={styles.executiveSectionHeader}>
-                  <View style={styles.executiveSectionAccent} />
-                  <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16, fontWeight: '800' }]}>
+                  <View style={styles.sectionAccent} />
+                  <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16 }]}>
+                    PROFESSIONAL EXPERIENCE
+                  </Text>
+                </View>
+                {(data?.work_experience || []).map((exp, i) => (
+                  <View key={i} style={[styles.itemContainer, { marginBottom: 25 }]}>
+                    <Text style={[styles.itemTitle, { color: '#0f172a', fontSize: 17, fontWeight: '700' }]}>
+                      {exp.role}
+                    </Text>
+                    <Text style={[styles.itemSubtitle, { color: '#3b82f6', fontSize: 15, fontWeight: '600' }]}>
+                      {exp.company} | {exp.duration}
+                    </Text>
+                    <Text style={[styles.itemDetail, { marginTop: 8, lineHeight: 22 }]}>
+                      {exp.description}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.section}>
+                <View style={styles.executiveSectionHeader}>
+                  <View style={styles.sectionAccent} />
+                  <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16 }]}>
+                    KEY PROJECTS
+                  </Text>
+                </View>
+                {(data?.projects || []).map((proj, i) => (
+                  <View key={i} style={[styles.itemContainer, { marginBottom: 20 }]}>
+                    <Text style={[styles.itemTitle, { color: '#0f172a', fontSize: 16, fontWeight: '700' }]}>
+                      {proj.title}
+                    </Text>
+                    <Text style={[styles.itemDetail, { marginTop: 5, lineHeight: 20 }]}>
+                      {proj.description}
+                    </Text>
+                    <Text style={[styles.itemLink, { color: '#3b82f6', fontWeight: '600', marginTop: 5 }]}>
+                      {proj.technologies ? `Tech Stack: ${proj.technologies}` : ''}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* Right Column */}
+            <View style={[styles.column, { width: '35%', paddingLeft: 20 }]}>
+              <View style={styles.section}>
+                <View style={styles.executiveSectionHeader}>
+                  <View style={styles.sectionAccent} />
+                  <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16 }]}>
                     EDUCATION
                   </Text>
                 </View>
                 {(data?.education || []).map((edu, i) => (
-                  <View key={i} style={[styles.itemContainer, { marginBottom: 18 }]}>
+                  <View key={i} style={[styles.itemContainer, { marginBottom: 20 }]}>
                     <Text style={[styles.itemTitle, { color: '#0f172a', fontSize: 15, fontWeight: '700' }]}>
                       {edu.degree}
                     </Text>
-                    <Text style={[styles.itemSubtitle, { color: '#6b7280', fontSize: 13 }]}>
-                      {edu.institute}
+                    <Text style={[styles.itemSubtitle, { color: '#3b82f6', fontSize: 14 }]}>
+                      {edu.field}
                     </Text>
-                    <Text style={[styles.itemDetail, { fontSize: 13, color: '#6b7280' }]}>
-                      {edu.year} {edu.grade ? '• ' + edu.grade : ''}
+                    <Text style={[styles.itemDetail, { fontSize: 13 }]}>
+                      {edu.institute} | {edu.year}
+                    </Text>
+                    <Text style={[styles.itemDetail, { fontSize: 13, fontWeight: '600' }]}>
+                      {edu.grade ? `${edu.grade}` : ''}
                     </Text>
                   </View>
                 ))}
               </View>
-            </View>
 
-            {/* Right Column - Projects */}
-            <View style={[styles.column, { width: '48%', paddingLeft: 15 }]}>
               <View style={styles.section}>
                 <View style={styles.executiveSectionHeader}>
-                  <View style={styles.executiveSectionAccent} />
-                  <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16, fontWeight: '800' }]}>
-                    KEY PROJECTS
+                  <View style={styles.sectionAccent} />
+                  <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16 }]}>
+                    CORE COMPETENCIES
                   </Text>
                 </View>
-                {(data?.projects || []).map((proj, i) => (
+                <View style={styles.executiveSkillsGrid}>
+                  {(data?.skills || []).slice(0, 12).map((skill, i) => (
+                    <View key={i} style={styles.executiveSkillBadge}>
+                      <Text style={styles.executiveSkillText}>{skill}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <View style={styles.executiveSectionHeader}>
+                  <View style={styles.sectionAccent} />
+                  <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16 }]}>
+                    CERTIFICATIONS
+                  </Text>
+                </View>
+                {(data?.certifications || []).map((cert, i) => (
                   <View key={i} style={[styles.itemContainer, { marginBottom: 15 }]}>
-                    <Text style={[styles.itemTitle, { color: '#0f172a', fontSize: 14, fontWeight: '700' }]}>
-                      {proj.title}
-                    </Text>
-                    <Text style={[styles.itemDetail, { marginTop: 3, lineHeight: 18, fontSize: 12 }]}>
-                      {proj.description}
-                    </Text>
-                    <Text style={[styles.itemLink, { color: '#3b82f6', fontWeight: '600', marginTop: 3, fontSize: 11 }]}>
-                      {proj.technologies ? `Technologies: ${proj.technologies}` : ''}
+                    <View style={styles.certificationBadge}>
+                      <MaterialIcons name="verified" size={16} color="#3b82f6" />
+                      <Text style={[styles.itemDetail, { marginLeft: 8, fontSize: 13, fontWeight: '600' }]}>
+                        {cert.name}
+                      </Text>
+                    </View>
+                    <Text style={[styles.itemDetail, { fontSize: 12, color: '#6b7280' }]}>
+                      {cert.organization} • {cert.year}
                     </Text>
                   </View>
                 ))}
               </View>
             </View>
           </View>
-
-          {/* Certifications & Achievements */}
-          {((data?.certifications && data.certifications.length > 0) || (data?.achievements && data.achievements.length > 0)) && (
-            <View style={styles.executiveTwoColumn}>
-              {/* Certifications */}
-              {data?.certifications && data.certifications.length > 0 && (
-                <View style={[styles.column, { width: '48%', paddingRight: 15 }]}>
-                  <View style={styles.section}>
-                    <View style={styles.executiveSectionHeader}>
-                      <View style={styles.executiveSectionAccent} />
-                      <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16, fontWeight: '800' }]}>
-                        CERTIFICATIONS
-                      </Text>
-                    </View>
-                    {data.certifications.map((cert, i) => (
-                      <View key={i} style={[styles.itemContainer, { marginBottom: 12 }]}>
-                        <Text style={[styles.itemTitle, { color: '#0f172a', fontSize: 13, fontWeight: '700' }]}>
-                          {cert.name}
-                        </Text>
-                        <Text style={[styles.itemDetail, { fontSize: 11, color: '#6b7280' }]}>
-                          {cert.organization} • {cert.year}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {/* Achievements */}
-              {data?.achievements && data.achievements.length > 0 && (
-                <View style={[styles.column, { width: '48%', paddingLeft: 15 }]}>
-                  <View style={styles.section}>
-                    <View style={styles.executiveSectionHeader}>
-                      <View style={styles.executiveSectionAccent} />
-                      <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16, fontWeight: '800' }]}>
-                        ACHIEVEMENTS
-                      </Text>
-                    </View>
-                    {data.achievements.map((achievement, i) => (
-                      <View key={i} style={[styles.itemContainer, { marginBottom: 8 }]}>
-                        <Text style={[styles.itemDetail, { fontSize: 12, color: '#374151', fontWeight: '500' }]}>
-                          • {achievement}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* Languages & Hobbies */}
-          {((data?.languages && data.languages.length > 0) || (data?.hobbies && data.hobbies.length > 0)) && (
-            <View style={styles.executiveTwoColumn}>
-              {/* Languages */}
-              {data?.languages && data.languages.length > 0 && (
-                <View style={[styles.column, { width: '48%', paddingRight: 15 }]}>
-                  <View style={styles.section}>
-                    <View style={styles.executiveSectionHeader}>
-                      <View style={styles.executiveSectionAccent} />
-                      <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16, fontWeight: '800' }]}>
-                        LANGUAGES
-                      </Text>
-                    </View>
-                    <View style={styles.languageContainer}>
-                      {data.languages.map((lang, i) => (
-                        <Text key={i} style={[styles.itemDetail, { fontSize: 13, color: '#374151', marginBottom: 5 }]}>
-                          • {lang}
-                        </Text>
-                      ))}
-                    </View>
-                  </View>
-                </View>
-              )}
-
-              {/* Hobbies */}
-              {data?.hobbies && data.hobbies.length > 0 && (
-                <View style={[styles.column, { width: '48%', paddingLeft: 15 }]}>
-                  <View style={styles.section}>
-                    <View style={styles.executiveSectionHeader}>
-                      <View style={styles.executiveSectionAccent} />
-                      <Text style={[styles.sectionTitle, { color: '#0f172a', fontSize: 16, fontWeight: '800' }]}>
-                        INTERESTS
-                      </Text>
-                    </View>
-                    <View style={styles.hobbiesContainer}>
-                      {data.hobbies.map((hobby, i) => (
-                        <Text key={i} style={[styles.itemDetail, { fontSize: 13, color: '#374151', marginBottom: 5 }]}>
-                          • {hobby}
-                        </Text>
-                      ))}
-                    </View>
-                  </View>
-                </View>
-              )}
-            </View>
-          )}
         </View>
       </View>
     ),
-
-    // Template 3: Elegant Professional (New Beautiful Template)
+    // Template 5: Creative Designer Resume (Green & Orange theme)
     (data) => (
       <View style={[styles.resumeCard, { backgroundColor: '#ffffff', padding: 0, overflow: 'hidden' }]}>
-        {/* Elegant Header with subtle gradient */}
-        <View style={[styles.elegantHeader, { 
-          backgroundColor: '#6366f1',
-          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
-          padding: 35,
+        {/* Creative Header */}
+        <View style={[styles.creativeHeader, { 
+          backgroundColor: '#059669',
+          background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)',
+          padding: 25,
           position: 'relative'
         }]}>
-          <View style={styles.elegantPattern}>
-            <View style={[styles.elegantShape, { backgroundColor: '#ffffff', opacity: 0.08 }]} />
-            <View style={[styles.elegantShape, { backgroundColor: '#ffffff', opacity: 0.04, top: 25, right: 30 }]} />
+          <View style={styles.creativePattern}>
+            <View style={[styles.creativeShape, { backgroundColor: '#f97316', opacity: 0.2 }]} />
+            <View style={[styles.creativeShape, { backgroundColor: '#f97316', opacity: 0.1, top: 10, left: 25 }]} />
+            <View style={[styles.creativeShape, { backgroundColor: '#ffffff', opacity: 0.1, top: 20, right: 30 }]} />
           </View>
-          
-          <View style={styles.elegantProfile}>
-            <View style={styles.elegantImageContainer}>
-              <MaterialIcons name="person-outline" size={70} color="#ffffff" />
+          <View style={styles.creativeProfile}>
+            <View style={styles.creativeImageContainer}>
+              <MaterialIcons name="palette" size={50} color="#ffffff" />
             </View>
-            <View style={styles.elegantInfo}>
-              <Text style={[styles.name, { fontSize: 34, color: '#ffffff', fontWeight: '700', letterSpacing: 0.8, marginBottom: 8 }]}>
+            <View style={styles.creativeInfo}>
+              <Text style={[styles.name, { fontSize: 28, color: '#ffffff', fontWeight: '800', letterSpacing: 0.5 }]}>
                 {data?.name}
               </Text>
-              <Text style={[styles.role, { fontSize: 18, color: '#e0e7ff', fontWeight: '500', marginBottom: 20 }]}>
+              <Text style={[styles.role, { fontSize: 16, color: '#d1fae5', fontWeight: '600', marginBottom: 12 }]}>
                 {data?.branch}
               </Text>
-              
-              {/* Contact Information in elegant layout */}
-              <View style={styles.elegantContactGrid}>
-                <View style={styles.elegantContactItem}>
-                  <MaterialIcons name="email" size={16} color="#e0e7ff" />
-                  <Text style={styles.elegantContactText}>{data?.email}</Text>
+              <View style={styles.creativeContactRow}>
+                <View style={styles.creativeContactItem}>
+                  <MaterialIcons name="email" size={12} color="#d1fae5" />
+                  <Text style={styles.creativeContactText}>{data?.email}</Text>
                 </View>
-                <View style={styles.elegantContactItem}>
-                  <MaterialIcons name="phone" size={16} color="#e0e7ff" />
-                  <Text style={styles.elegantContactText}>{data?.phone}</Text>
+                <View style={styles.creativeContactItem}>
+                  <MaterialIcons name="phone" size={12} color="#d1fae5" />
+                  <Text style={styles.creativeContactText}>{data?.phone}</Text>
                 </View>
-                <View style={styles.elegantContactItem}>
-                  <MaterialIcons name="language" size={16} color="#e0e7ff" />
-                  <Text style={styles.elegantContactText}>{data?.linkedin_url}</Text>
-                </View>
-                {data?.github_url && (
-                  <View style={styles.elegantContactItem}>
-                    <MaterialIcons name="code" size={16} color="#e0e7ff" />
-                    <Text style={styles.elegantContactText}>{data?.github_url}</Text>
-                  </View>
-                )}
               </View>
             </View>
           </View>
         </View>
 
-        {/* Content Area with elegant spacing */}
-        <View style={[styles.elegantContent, { padding: 35 }]}>
-          {/* Professional Summary */}
-          <View style={[styles.section, { marginBottom: 35 }]}>
-            <View style={styles.elegantSectionHeader}>
-              <View style={styles.elegantSectionLine} />
-              <Text style={[styles.sectionTitle, { color: '#6366f1', fontSize: 18, fontWeight: '600', letterSpacing: 0.5 }]}>
-                PROFESSIONAL SUMMARY
+        {/* Content with creative layout */}
+        <View style={[styles.creativeContent, { padding: 20 }]}>
+          {/* About Me Section */}
+          <View style={[styles.section, { marginBottom: 20 }]}>
+            <View style={styles.creativeSectionHeader}>
+              <View style={[styles.creativeSectionAccent, { backgroundColor: '#f97316' }]} />
+              <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 15, fontWeight: '700' }]}>
+                ABOUT ME
               </Text>
             </View>
-            <Text style={[styles.sectionContent, { fontSize: 15, lineHeight: 26, color: '#374151', fontWeight: '400', textAlign: 'justify' }]}>
+            <Text style={[styles.sectionContent, { fontSize: 13, lineHeight: 20, color: '#374151' }]}>
               {data?.objective}
             </Text>
           </View>
 
-          {/* Skills with elegant badges */}
-          <View style={[styles.section, { marginBottom: 35 }]}>
-            <View style={styles.elegantSectionHeader}>
-              <View style={styles.elegantSectionLine} />
-              <Text style={[styles.sectionTitle, { color: '#6366f1', fontSize: 18, fontWeight: '600' }]}>
-                CORE SKILLS
-              </Text>
-            </View>
-            <View style={styles.elegantSkillsContainer}>
-              {(data?.skills || []).slice(0, 18).map((skill, i) => (
-                <View key={i} style={styles.elegantSkillBadge}>
-                  <Text style={styles.elegantSkillText}>{skill}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Professional Experience */}
-          <View style={[styles.section, { marginBottom: 35 }]}>
-            <View style={styles.elegantSectionHeader}>
-              <View style={styles.elegantSectionLine} />
-              <Text style={[styles.sectionTitle, { color: '#6366f1', fontSize: 18, fontWeight: '600' }]}>
-                PROFESSIONAL EXPERIENCE
-              </Text>
-            </View>
-            {(data?.work_experience || []).map((exp, i) => (
-              <View key={i} style={[styles.itemContainer, { marginBottom: 28, paddingLeft: 25, borderLeft: '2px solid #e5e7eb', position: 'relative' }]}>
-                <View style={[styles.elegantTimeline, { backgroundColor: '#6366f1' }]} />
-                <Text style={[styles.itemTitle, { color: '#6366f1', fontSize: 17, fontWeight: '700', marginBottom: 5 }]}>
-                  {exp.role}
-                </Text>
-                <Text style={[styles.itemSubtitle, { color: '#8b5cf6', fontSize: 15, fontWeight: '600', marginBottom: 8 }]}>
-                  {exp.company} | {exp.duration}
-                </Text>
-                <Text style={[styles.itemDetail, { lineHeight: 24, fontSize: 14, color: '#374151', textAlign: 'justify' }]}>
-                  {exp.description}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Two Column Layout for Education and Projects */}
-          <View style={styles.elegantTwoColumn}>
-            {/* Left Column - Education */}
-            <View style={[styles.column, { width: '50%', paddingRight: 20 }]}>
+          {/* Three Column Layout */}
+          <View style={styles.creativeThreeColumn}>
+            {/* Left Column - Experience */}
+            <View style={[styles.column, { width: '40%', paddingRight: 10 }]}>
               <View style={styles.section}>
-                <View style={styles.elegantSectionHeader}>
-                  <View style={styles.elegantSectionLine} />
-                  <Text style={[styles.sectionTitle, { color: '#6366f1', fontSize: 16, fontWeight: '600' }]}>
+                <View style={styles.creativeSectionHeader}>
+                  <View style={[styles.creativeSectionAccent, { backgroundColor: '#f97316' }]} />
+                  <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 14 }]}>
+                    EXPERIENCE
+                  </Text>
+                </View>
+                {(data?.work_experience || []).map((exp, i) => (
+                  <View key={i} style={[styles.itemContainer, { marginBottom: 15 }]}>
+                    <Text style={[styles.itemTitle, { color: '#059669', fontSize: 13, fontWeight: '700' }]}>
+                      {exp.role}
+                    </Text>
+                    <Text style={[styles.itemSubtitle, { color: '#f97316', fontSize: 11, fontWeight: '600' }]}>
+                      {exp.company}
+                    </Text>
+                    <Text style={[styles.itemDetail, { fontSize: 10, color: '#6b7280' }]}>
+                      {exp.duration}
+                    </Text>
+                    <Text style={[styles.itemDetail, { marginTop: 3, lineHeight: 16, fontSize: 11 }]}>
+                      {exp.description}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.section}>
+                <View style={styles.creativeSectionHeader}>
+                  <View style={[styles.creativeSectionAccent, { backgroundColor: '#f97316' }]} />
+                  <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 14 }]}>
+                    PROJECTS
+                  </Text>
+                </View>
+                {(data?.projects || []).slice(0, 3).map((proj, i) => (
+                  <View key={i} style={[styles.itemContainer, { marginBottom: 12 }]}>
+                    <Text style={[styles.itemTitle, { color: '#059669', fontSize: 12, fontWeight: '700' }]}>
+                      {proj.title}
+                    </Text>
+                    <Text style={[styles.itemDetail, { marginTop: 2, lineHeight: 15, fontSize: 10 }]}>
+                      {proj.description}
+                    </Text>
+                    <Text style={[styles.itemLink, { color: '#f97316', fontWeight: '600', marginTop: 2, fontSize: 10 }]}>
+                      {proj.technologies ? `${proj.technologies}` : ''}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* Middle Column - Skills & Languages */}
+            <View style={[styles.column, { width: '30%', paddingHorizontal: 5 }]}>
+              <View style={styles.section}>
+                <View style={styles.creativeSectionHeader}>
+                  <View style={[styles.creativeSectionAccent, { backgroundColor: '#f97316' }]} />
+                  <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 14 }]}>
+                    SKILLS
+                  </Text>
+                </View>
+                <View style={styles.creativeSkillsList}>
+                  {(data?.skills || []).slice(0, 8).map((skill, i) => (
+                    <View key={i} style={styles.creativeSkillBadge}>
+                      <Text style={styles.creativeSkillText}>{skill}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <View style={styles.creativeSectionHeader}>
+                  <View style={[styles.creativeSectionAccent, { backgroundColor: '#f97316' }]} />
+                  <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 14 }]}>
+                    LANGUAGES
+                  </Text>
+                </View>
+                {(data?.languages || []).map((lang, i) => (
+                  <View key={i} style={styles.creativeLanguageItem}>
+                    <Text style={[styles.sidebarText, { color: '#374151', fontSize: 11 }]}>{lang}</Text>
+                    <View style={styles.creativeLanguageLevel}>
+                      <View style={[styles.creativeLevelDot, { backgroundColor: '#059669' }]} />
+                      <View style={[styles.creativeLevelDot, { backgroundColor: '#059669' }]} />
+                      <View style={[styles.creativeLevelDot, { backgroundColor: '#059669' }]} />
+                      <View style={[styles.creativeLevelDot, { backgroundColor: i % 2 === 0 ? '#059669' : '#d1d5db' }]} />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* Right Column - Education & Certifications */}
+            <View style={[styles.column, { width: '30%', paddingLeft: 10 }]}>
+              <View style={styles.section}>
+                <View style={styles.creativeSectionHeader}>
+                  <View style={[styles.creativeSectionAccent, { backgroundColor: '#f97316' }]} />
+                  <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 14 }]}>
                     EDUCATION
                   </Text>
                 </View>
                 {(data?.education || []).map((edu, i) => (
-                  <View key={i} style={[styles.itemContainer, { marginBottom: 20, paddingLeft: 15, borderLeft: '2px solid #f3f4f6' }]}>
-                    <Text style={[styles.itemTitle, { color: '#6366f1', fontSize: 15, fontWeight: '700' }]}>
+                  <View key={i} style={[styles.itemContainer, { marginBottom: 15 }]}>
+                    <Text style={[styles.itemTitle, { color: '#059669', fontSize: 12, fontWeight: '700' }]}>
                       {edu.degree}
                     </Text>
-                    <Text style={[styles.itemSubtitle, { color: '#8b5cf6', fontSize: 13, fontWeight: '600' }]}>
+                    <Text style={[styles.itemSubtitle, { color: '#f97316', fontSize: 11 }]}>
+                      {edu.field}
+                    </Text>
+                    <Text style={[styles.itemDetail, { fontSize: 10 }]}>
                       {edu.institute}
                     </Text>
-                    <Text style={[styles.itemDetail, { fontSize: 13, color: '#6b7280' }]}>
-                      {edu.field} | {edu.year}
+                    <Text style={[styles.itemDetail, { fontSize: 10, color: '#6b7280' }]}>
+                      {edu.year} {edu.grade ? `• ${edu.grade}` : ''}
                     </Text>
-                    {edu.grade && (
-                      <Text style={[styles.itemDetail, { fontSize: 12, color: '#6b7280', fontWeight: '500' }]}>
-                        Grade: {edu.grade}
-                      </Text>
-                    )}
                   </View>
                 ))}
               </View>
-            </View>
 
-            {/* Right Column - Projects */}
-            <View style={[styles.column, { width: '50%', paddingLeft: 20 }]}>
-              <View style={styles.section}>
-                <View style={styles.elegantSectionHeader}>
-                  <View style={styles.elegantSectionLine} />
-                  <Text style={[styles.sectionTitle, { color: '#6366f1', fontSize: 16, fontWeight: '600' }]}>
-                    KEY PROJECTS
-                  </Text>
-                </View>
-                {(data?.projects || []).map((proj, i) => (
-                  <View key={i} style={[styles.itemContainer, { marginBottom: 18, paddingLeft: 15, borderLeft: '2px solid #f3f4f6' }]}>
-                    <Text style={[styles.itemTitle, { color: '#6366f1', fontSize: 14, fontWeight: '700' }]}>
-                      {proj.title}
-                    </Text>
-                    <Text style={[styles.itemDetail, { marginTop: 5, lineHeight: 20, fontSize: 13, textAlign: 'justify' }]}>
-                      {proj.description}
-                    </Text>
-                    {proj.technologies && (
-                      <Text style={[styles.itemLink, { color: '#8b5cf6', fontWeight: '600', marginTop: 5, fontSize: 12 }]}>
-                        Tech Stack: {proj.technologies}
-                      </Text>
-                    )}
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-
-          {/* Additional Information in Three Columns */}
-          {((data?.certifications && data.certifications.length > 0) || 
-            (data?.achievements && data.achievements.length > 0) || 
-            (data?.languages && data.languages.length > 0)) && (
-            <View style={styles.elegantThreeColumn}>
-              {/* Certifications */}
-              {data?.certifications && data.certifications.length > 0 && (
-                <View style={[styles.column, { width: '33%', paddingRight: 15 }]}>
-                  <View style={styles.section}>
-                    <View style={styles.elegantSectionHeader}>
-                      <View style={styles.elegantSectionLine} />
-                      <Text style={[styles.sectionTitle, { color: '#6366f1', fontSize: 14, fontWeight: '600' }]}>
-                        CERTIFICATIONS
-                      </Text>
-                    </View>
-                    {data.certifications.map((cert, i) => (
-                      <View key={i} style={[styles.itemContainer, { marginBottom: 12 }]}>
-                        <Text style={[styles.itemTitle, { color: '#6366f1', fontSize: 12, fontWeight: '700' }]}>
-                          {cert.name}
-                        </Text>
-                        <Text style={[styles.itemDetail, { fontSize: 10, color: '#6b7280' }]}>
-                          {cert.organization}
-                        </Text>
-                        <Text style={[styles.itemDetail, { fontSize: 10, color: '#6b7280' }]}>
-                          {cert.year}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {/* Achievements */}
-              {data?.achievements && data.achievements.length > 0 && (
-                <View style={[styles.column, { width: '33%', paddingHorizontal: 10 }]}>
-                  <View style={styles.section}>
-                    <View style={styles.elegantSectionHeader}>
-                      <View style={styles.elegantSectionLine} />
-                      <Text style={[styles.sectionTitle, { color: '#6366f1', fontSize: 14, fontWeight: '600' }]}>
-                        ACHIEVEMENTS
-                      </Text>
-                    </View>
-                    {data.achievements.map((achievement, i) => (
-                      <View key={i} style={[styles.itemContainer, { marginBottom: 8 }]}>
-                        <Text style={[styles.itemDetail, { fontSize: 11, color: '#374151', fontWeight: '500' }]}>
-                          • {achievement}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {/* Languages & Hobbies */}
-              <View style={[styles.column, { width: '33%', paddingLeft: 15 }]}>
-                {data?.languages && data.languages.length > 0 && (
-                  <View style={styles.section}>
-                    <View style={styles.elegantSectionHeader}>
-                      <View style={styles.elegantSectionLine} />
-                      <Text style={[styles.sectionTitle, { color: '#6366f1', fontSize: 14, fontWeight: '600' }]}>
-                        LANGUAGES
-                      </Text>
-                    </View>
-                    <View style={styles.languageContainer}>
-                      {data.languages.map((lang, i) => (
-                        <Text key={i} style={[styles.itemDetail, { fontSize: 12, color: '#374151', marginBottom: 4 }]}>
-                          • {lang}
-                        </Text>
-                      ))}
-                    </View>
-                  </View>
-                )}
-
-                {data?.hobbies && data.hobbies.length > 0 && (
-                  <View style={[styles.section, { marginTop: 20 }]}>
-                    <View style={styles.elegantSectionHeader}>
-                      <View style={styles.elegantSectionLine} />
-                      <Text style={[styles.sectionTitle, { color: '#6366f1', fontSize: 14, fontWeight: '600' }]}>
-                        INTERESTS
-                      </Text>
-                    </View>
-                    <View style={styles.hobbiesContainer}>
-                      {data.hobbies.map((hobby, i) => (
-                        <Text key={i} style={[styles.itemDetail, { fontSize: 12, color: '#374151', marginBottom: 4 }]}>
-                          â€¢ {hobby}
-                        </Text>
-                      ))}
-                    </View>
-                  </View>
-                )}
-              </View>
-            </View>
-          )}
-        </View>
-      </View>
-    ),
-
-    // Template 4: Creative Half-Side Resume (Green Theme)
-    (data) => (
-      <View style={[styles.resumeCard, { backgroundColor: '#ffffff', padding: 0, overflow: 'hidden' }]}>
-        <View style={styles.creativeContainer}>
-          {/* Left Sidebar - Green Theme */}
-          <View style={[styles.creativeSidebar, { 
-            backgroundColor: '#059669',
-            background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)',
-            width: '35%',
-            padding: 25
-          }]}>
-            {/* Profile Section */}
-            <View style={styles.creativeProfile}>
-              <View style={styles.creativeImageContainer}>
-                <MaterialIcons name="account-circle" size={70} color="#ffffff" />
-              </View>
-              <Text style={[styles.name, { fontSize: 22, color: '#ffffff', fontWeight: '800', textAlign: 'center', marginBottom: 5 }]}>
-                {data?.name}
-              </Text>
-              <Text style={[styles.role, { fontSize: 14, color: '#a7f3d0', fontWeight: '600', textAlign: 'center', marginBottom: 20 }]}>
-                {data?.branch}
-              </Text>
-            </View>
-
-            {/* Contact Information */}
-            <View style={[styles.section, { marginBottom: 25 }]}>
-              <Text style={[styles.sectionTitle, { color: '#ffffff', fontSize: 14, fontWeight: '700', marginBottom: 15, letterSpacing: 1 }]}>
-                CONTACT
-              </Text>
-              <View style={styles.creativeContactItem}>
-                <MaterialIcons name="email" size={14} color="#a7f3d0" />
-                <Text style={[styles.creativeContactText, { color: '#d1fae5', fontSize: 11 }]}>{data?.email}</Text>
-              </View>
-              <View style={styles.creativeContactItem}>
-                <MaterialIcons name="phone" size={14} color="#a7f3d0" />
-                <Text style={[styles.creativeContactText, { color: '#d1fae5', fontSize: 11 }]}>{data?.phone}</Text>
-              </View>
-              <View style={styles.creativeContactItem}>
-                <MaterialIcons name="location-on" size={14} color="#a7f3d0" />
-                <Text style={[styles.creativeContactText, { color: '#d1fae5', fontSize: 11 }]}>{data?.address}</Text>
-              </View>
-              <View style={styles.creativeContactItem}>
-                <MaterialIcons name="link" size={14} color="#a7f3d0" />
-                <Text style={[styles.creativeContactText, { color: '#d1fae5', fontSize: 11 }]}>{data?.linkedin_url}</Text>
-              </View>
-            </View>
-
-            {/* Skills Section */}
-            <View style={[styles.section, { marginBottom: 25 }]}>
-              <Text style={[styles.sectionTitle, { color: '#ffffff', fontSize: 14, fontWeight: '700', marginBottom: 15, letterSpacing: 1 }]}>
-                SKILLS
-              </Text>
-              {(data?.skills || []).slice(0, 8).map((skill, i) => (
-                <View key={i} style={[styles.creativeSkillItem, { marginBottom: 12 }]}>
-                  <Text style={[styles.creativeSkillName, { color: '#d1fae5', fontSize: 12, marginBottom: 4 }]}>{skill}</Text>
-                  <View style={styles.creativeProgressBar}>
-                    <View style={[styles.creativeProgressFill, { width: `${85 + (i % 3) * 5}%`, backgroundColor: '#34d399' }]} />
-                  </View>
-                </View>
-              ))}
-            </View>
-
-            {/* Languages */}
-            {data?.languages && data.languages.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: '#ffffff', fontSize: 14, fontWeight: '700', marginBottom: 15, letterSpacing: 1 }]}>
-                  LANGUAGES
-                </Text>
-                {data.languages.map((lang, i) => (
-                  <Text key={i} style={[styles.creativeLanguageItem, { color: '#d1fae5', fontSize: 12, marginBottom: 6 }]}>
-                    • {lang}
-                  </Text>
-                ))}
-              </View>
-            )}
-          </View>
-
-          {/* Right Content Area */}
-          <View style={[styles.creativeContent, { width: '65%', padding: 25 }]}>
-            {/* Professional Summary */}
-            <View style={[styles.section, { marginBottom: 25 }]}>
-              <View style={styles.creativeSectionHeader}>
-                <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 16, fontWeight: '700', marginBottom: 10 }]}>
-                  PROFESSIONAL SUMMARY
-                </Text>
-                <View style={[styles.creativeSectionLine, { backgroundColor: '#059669' }]} />
-              </View>
-              <Text style={[styles.sectionContent, { fontSize: 13, lineHeight: 20, color: '#374151', textAlign: 'justify' }]}>
-                {data?.objective}
-              </Text>
-            </View>
-
-            {/* Work Experience */}
-            <View style={[styles.section, { marginBottom: 25 }]}>
-              <View style={styles.creativeSectionHeader}>
-                <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 16, fontWeight: '700', marginBottom: 10 }]}>
-                  WORK EXPERIENCE
-                </Text>
-                <View style={[styles.creativeSectionLine, { backgroundColor: '#059669' }]} />
-              </View>
-              {(data?.work_experience || []).map((exp, i) => (
-                <View key={i} style={[styles.itemContainer, { marginBottom: 20, paddingLeft: 15, borderLeft: '3px solid #d1fae5' }]}>
-                  <Text style={[styles.itemTitle, { color: '#059669', fontSize: 15, fontWeight: '700' }]}>
-                    {exp.role}
-                  </Text>
-                  <Text style={[styles.itemSubtitle, { color: '#6b7280', fontSize: 13, fontWeight: '600' }]}>
-                    {exp.company} | {exp.duration}
-                  </Text>
-                  <Text style={[styles.itemDetail, { marginTop: 5, lineHeight: 18, fontSize: 12, color: '#374151' }]}>
-                    {exp.description}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Education */}
-            <View style={[styles.section, { marginBottom: 25 }]}>
-              <View style={styles.creativeSectionHeader}>
-                <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 16, fontWeight: '700', marginBottom: 10 }]}>
-                  EDUCATION
-                </Text>
-                <View style={[styles.creativeSectionLine, { backgroundColor: '#059669' }]} />
-              </View>
-              {(data?.education || []).map((edu, i) => (
-                <View key={i} style={[styles.itemContainer, { marginBottom: 15 }]}>
-                  <Text style={[styles.itemTitle, { color: '#059669', fontSize: 14, fontWeight: '700' }]}>
-                    {edu.degree}
-                  </Text>
-                  <Text style={[styles.itemSubtitle, { color: '#6b7280', fontSize: 12 }]}>
-                    {edu.institute} | {edu.year}
-                  </Text>
-                  <Text style={[styles.itemDetail, { fontSize: 12, color: '#6b7280' }]}>
-                    {edu.field} {edu.grade ? '• Grade: ' + edu.grade : ''}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Projects */}
-            {data?.projects && data.projects.length > 0 && (
-              <View style={[styles.section, { marginBottom: 25 }]}>
-                <View style={styles.creativeSectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 16, fontWeight: '700', marginBottom: 10 }]}>
-                    KEY PROJECTS
-                  </Text>
-                  <View style={[styles.creativeSectionLine, { backgroundColor: '#059669' }]} />
-                </View>
-                {data.projects.map((proj, i) => (
-                  <View key={i} style={[styles.itemContainer, { marginBottom: 15 }]}>
-                    <Text style={[styles.itemTitle, { color: '#059669', fontSize: 13, fontWeight: '700' }]}>
-                      {proj.title}
-                    </Text>
-                    <Text style={[styles.itemDetail, { marginTop: 3, lineHeight: 16, fontSize: 11, color: '#374151' }]}>
-                      {proj.description}
-                    </Text>
-                    {proj.technologies && (
-                      <Text style={[styles.itemLink, { color: '#10b981', fontWeight: '600', marginTop: 3, fontSize: 10 }]}>
-                        Tech: {proj.technologies}
-                      </Text>
-                    )}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Certifications */}
-            {data?.certifications && data.certifications.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.creativeSectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 16, fontWeight: '700', marginBottom: 10 }]}>
+                  <View style={[styles.creativeSectionAccent, { backgroundColor: '#f97316' }]} />
+                  <Text style={[styles.sectionTitle, { color: '#059669', fontSize: 14 }]}>
                     CERTIFICATIONS
                   </Text>
-                  <View style={[styles.creativeSectionLine, { backgroundColor: '#059669' }]} />
                 </View>
-                {data.certifications.map((cert, i) => (
+                {(data?.certifications || []).map((cert, i) => (
                   <View key={i} style={[styles.itemContainer, { marginBottom: 10 }]}>
-                    <Text style={[styles.itemTitle, { color: '#059669', fontSize: 12, fontWeight: '700' }]}>
-                      {cert.name}
-                    </Text>
+                    <View style={styles.creativeCertificationBadge}>
+                      <MaterialIcons name="verified" size={12} color="#f97316" />
+                      <Text style={[styles.itemDetail, { marginLeft: 4, fontSize: 11, fontWeight: '600' }]}>
+                        {cert.name}
+                      </Text>
+                    </View>
                     <Text style={[styles.itemDetail, { fontSize: 10, color: '#6b7280' }]}>
                       {cert.organization} • {cert.year}
                     </Text>
                   </View>
                 ))}
               </View>
-            )}
-          </View>
-        </View>
-      </View>
-    ),
-
-    // Template 5: Modern Half-Side Resume (Orange Theme)
-    (data) => (
-      <View style={[styles.resumeCard, { backgroundColor: '#ffffff', padding: 0, overflow: 'hidden' }]}>
-        <View style={styles.modernContainer}>
-          {/* Right Sidebar - Orange Theme */}
-          <View style={[styles.modernContent, { width: '65%', padding: 25 }]}>
-            {/* Header */}
-            <View style={[styles.modernHeader, { marginBottom: 25 }]}>
-              <Text style={[styles.name, { fontSize: 28, color: '#ea580c', fontWeight: '800', marginBottom: 5 }]}>
-                {data?.name}
-              </Text>
-              <Text style={[styles.role, { fontSize: 16, color: '#6b7280', fontWeight: '600', marginBottom: 15 }]}>
-                {data?.branch}
-              </Text>
-              <View style={[styles.modernHeaderLine, { backgroundColor: '#ea580c' }]} />
             </View>
-
-            {/* Professional Summary */}
-            <View style={[styles.section, { marginBottom: 25 }]}>
-              <View style={styles.modernSectionHeader}>
-                <MaterialIcons name="person" size={18} color="#ea580c" />
-                <Text style={[styles.sectionTitle, { color: '#ea580c', fontSize: 16, fontWeight: '700', marginLeft: 8 }]}>
-                  PROFESSIONAL SUMMARY
-                </Text>
-              </View>
-              <Text style={[styles.sectionContent, { fontSize: 13, lineHeight: 20, color: '#374151', textAlign: 'justify', marginTop: 10 }]}>
-                {data?.objective}
-              </Text>
-            </View>
-
-            {/* Work Experience */}
-            <View style={[styles.section, { marginBottom: 25 }]}>
-              <View style={styles.modernSectionHeader}>
-                <MaterialIcons name="work" size={18} color="#ea580c" />
-                <Text style={[styles.sectionTitle, { color: '#ea580c', fontSize: 16, fontWeight: '700', marginLeft: 8 }]}>
-                  WORK EXPERIENCE
-                </Text>
-              </View>
-              {(data?.work_experience || []).map((exp, i) => (
-                <View key={i} style={[styles.itemContainer, { marginTop: 15, marginBottom: 20, paddingLeft: 20, borderLeft: '3px solid #fed7aa', position: 'relative' }]}>
-                  <View style={[styles.modernTimeline, { backgroundColor: '#ea580c' }]} />
-                  <Text style={[styles.itemTitle, { color: '#ea580c', fontSize: 15, fontWeight: '700' }]}>
-                    {exp.role}
-                  </Text>
-                  <Text style={[styles.itemSubtitle, { color: '#f97316', fontSize: 13, fontWeight: '600' }]}>
-                    {exp.company} | {exp.duration}
-                  </Text>
-                  <Text style={[styles.itemDetail, { marginTop: 5, lineHeight: 18, fontSize: 12, color: '#374151' }]}>
-                    {exp.description}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Education */}
-            <View style={[styles.section, { marginBottom: 25 }]}>
-              <View style={styles.modernSectionHeader}>
-                <MaterialIcons name="school" size={18} color="#ea580c" />
-                <Text style={[styles.sectionTitle, { color: '#ea580c', fontSize: 16, fontWeight: '700', marginLeft: 8 }]}>
-                  EDUCATION
-                </Text>
-              </View>
-              {(data?.education || []).map((edu, i) => (
-                <View key={i} style={[styles.itemContainer, { marginTop: 15, marginBottom: 15 }]}>
-                  <Text style={[styles.itemTitle, { color: '#ea580c', fontSize: 14, fontWeight: '700' }]}>
-                    {edu.degree}
-                  </Text>
-                  <Text style={[styles.itemSubtitle, { color: '#6b7280', fontSize: 12 }]}>
-                    {edu.institute} | {edu.year}
-                  </Text>
-                  <Text style={[styles.itemDetail, { fontSize: 12, color: '#6b7280' }]}>
-                    {edu.field} {edu.grade ? '• Grade: ' + edu.grade : ''}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Projects */}
-            {data?.projects && data.projects.length > 0 && (
-              <View style={styles.section}>
-                <View style={styles.modernSectionHeader}>
-                  <MaterialIcons name="code" size={18} color="#ea580c" />
-                  <Text style={[styles.sectionTitle, { color: '#ea580c', fontSize: 16, fontWeight: '700', marginLeft: 8 }]}>
-                    KEY PROJECTS
-                  </Text>
-                </View>
-                {data.projects.map((proj, i) => (
-                  <View key={i} style={[styles.itemContainer, { marginTop: 15, marginBottom: 15 }]}>
-                    <Text style={[styles.itemTitle, { color: '#ea580c', fontSize: 13, fontWeight: '700' }]}>
-                      {proj.title}
-                    </Text>
-                    <Text style={[styles.itemDetail, { marginTop: 3, lineHeight: 16, fontSize: 11, color: '#374151' }]}>
-                      {proj.description}
-                    </Text>
-                    {proj.technologies && (
-                      <Text style={[styles.itemLink, { color: '#f97316', fontWeight: '600', marginTop: 3, fontSize: 10 }]}>
-                        Technologies: {proj.technologies}
-                      </Text>
-                    )}
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-
-          {/* Left Sidebar - Orange Theme */}
-          <View style={[styles.modernSidebar, { 
-            backgroundColor: '#ea580c',
-            background: 'linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%)',
-            width: '35%',
-            padding: 25
-          }]}>
-            {/* Profile Section */}
-            <View style={styles.modernProfile}>
-              <View style={styles.modernImageContainer}>
-                <MaterialIcons name="person" size={60} color="#ffffff" />
-              </View>
-            </View>
-
-            {/* Contact Information */}
-            <View style={[styles.section, { marginBottom: 25 }]}>
-              <Text style={[styles.sectionTitle, { color: '#ffffff', fontSize: 14, fontWeight: '700', marginBottom: 15, letterSpacing: 1 }]}>
-                CONTACT INFO
-              </Text>
-              <View style={styles.modernContactItem}>
-                <MaterialIcons name="email" size={14} color="#fed7aa" />
-                <Text style={[styles.modernContactText, { color: '#fef3e2', fontSize: 11 }]}>{data?.email}</Text>
-              </View>
-              <View style={styles.modernContactItem}>
-                <MaterialIcons name="phone" size={14} color="#fed7aa" />
-                <Text style={[styles.modernContactText, { color: '#fef3e2', fontSize: 11 }]}>{data?.phone}</Text>
-              </View>
-              <View style={styles.modernContactItem}>
-                <MaterialIcons name="location-on" size={14} color="#fed7aa" />
-                <Text style={[styles.modernContactText, { color: '#fef3e2', fontSize: 11 }]}>{data?.address}</Text>
-              </View>
-              <View style={styles.modernContactItem}>
-                <MaterialIcons name="link" size={14} color="#fed7aa" />
-                <Text style={[styles.modernContactText, { color: '#fef3e2', fontSize: 11 }]}>{data?.linkedin_url}</Text>
-              </View>
-              {data?.github_url && (
-                <View style={styles.modernContactItem}>
-                  <MaterialIcons name="code" size={14} color="#fed7aa" />
-                  <Text style={[styles.modernContactText, { color: '#fef3e2', fontSize: 11 }]}>{data?.github_url}</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Skills Section */}
-            <View style={[styles.section, { marginBottom: 25 }]}>
-              <Text style={[styles.sectionTitle, { color: '#ffffff', fontSize: 14, fontWeight: '700', marginBottom: 15, letterSpacing: 1 }]}>
-                CORE SKILLS
-              </Text>
-              <View style={styles.modernSkillsContainer}>
-                {(data?.skills || []).slice(0, 12).map((skill, i) => (
-                  <View key={i} style={styles.modernSkillBadge}>
-                    <Text style={styles.modernSkillText}>{skill}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Languages */}
-            {data?.languages && data.languages.length > 0 && (
-              <View style={[styles.section, { marginBottom: 25 }]}>
-                <Text style={[styles.sectionTitle, { color: '#ffffff', fontSize: 14, fontWeight: '700', marginBottom: 15, letterSpacing: 1 }]}>
-                  LANGUAGES
-                </Text>
-                {data.languages.map((lang, i) => (
-                  <View key={i} style={styles.modernLanguageItem}>
-                    <Text style={[styles.modernLanguageText, { color: '#fef3e2', fontSize: 12 }]}>{lang}</Text>
-                    <View style={styles.modernLanguageLevel}>
-                      {[...Array(5)].map((_, j) => (
-                        <View 
-                          key={j} 
-                          style={[
-                            styles.modernLevelDot, 
-                            { backgroundColor: j < (4 + (i % 2)) ? '#fed7aa' : 'rgba(255,255,255,0.3)' }
-                          ]} 
-                        />
-                      ))}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Certifications */}
-            {data?.certifications && data.certifications.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: '#ffffff', fontSize: 14, fontWeight: '700', marginBottom: 15, letterSpacing: 1 }]}>
-                  CERTIFICATIONS
-                </Text>
-                {data.certifications.map((cert, i) => (
-                  <View key={i} style={styles.modernCertItem}>
-                    <MaterialIcons name="verified" size={12} color="#fed7aa" />
-                    <View style={styles.modernCertText}>
-                      <Text style={[styles.modernCertName, { color: '#fef3e2', fontSize: 11, fontWeight: '600' }]}>
-                        {cert.name}
-                      </Text>
-                      <Text style={[styles.modernCertOrg, { color: '#fed7aa', fontSize: 9 }]}>
-                        {cert.organization} • {cert.year}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
           </View>
         </View>
       </View>
@@ -1335,31 +1033,8 @@ const ResumeScreen = () => {
             <meta charset="utf-8" />
             <title>Resume - ${safeData.name}</title>
             <style>
-              @page { 
-                size: A4; 
-                margin: 0; 
-                padding: 0;
-              }
-              * { 
-                box-sizing: border-box; 
-                margin: 0; 
-                padding: 0; 
-              }
-              body { 
-                font-family: Helvetica, Arial, sans-serif; 
-                margin: 0; 
-                background: #ffffff; 
-                line-height: 1.5; 
-                width: 210mm;
-                min-height: 297mm;
-              }
-              .container { 
-                width: 100%; 
-                min-height: 100vh; 
-                border-left: 5px solid #0284c7; 
-                padding: 25px; 
-                box-shadow: none; 
-              }
+              body { font-family: Helvetica, Arial, sans-serif; margin: 20px; background: #ffffff; line-height: 1.5; }
+              .container { max-width: 900px; margin: auto; border-left: 5px solid #0284c7; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
               .header { margin-bottom: 25px; }
               .name { font-size: 28px; color: #0c4a6e; font-weight: 700; }
               .role { font-size: 18px; color: #475569; font-weight: 600; margin-bottom: 10px; }
@@ -1439,32 +1114,8 @@ const ResumeScreen = () => {
             <meta charset="utf-8" />
             <title>Resume - ${safeData.name}</title>
             <style>
-              @page { 
-                size: A4; 
-                margin: 0; 
-                padding: 0;
-              }
-              * { 
-                box-sizing: border-box; 
-                margin: 0; 
-                padding: 0; 
-              }
-              body { 
-                font-family: Helvetica, Arial, sans-serif; 
-                margin: 0; 
-                background: #ffffff; 
-                line-height: 1.5; 
-                width: 210mm;
-                min-height: 297mm;
-              }
-              .container { 
-                width: 100%; 
-                min-height: 100vh; 
-                display: flex; 
-                box-shadow: none; 
-                border-radius: 0; 
-                overflow: hidden; 
-              }
+              body { font-family: Helvetica, Arial, sans-serif; margin: 20px; background: #ffffff; line-height: 1.5; }
+              .container { max-width: 900px; margin: auto; display: flex; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 16px; overflow: hidden; }
               .sidebar { width: 38%; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 25px; color: #ffffff; }
               .content { width: 62%; padding: 25px; background: #ffffff; }
               .profile-section { text-align: center; margin-bottom: 30px; }
@@ -1491,15 +1142,15 @@ const ResumeScreen = () => {
             <div class="container">
               <div class="sidebar">
                 <div class="profile-section">
-                  <div class="profile-image">ðŸ‘¤</div>
+                  <div class="profile-image">👤</div>
                   <div class="name">${safeData.name}</div>
                   <div class="role">${safeData.branch}</div>
                 </div>
                 <div class="sidebar-section">
                   <div class="sidebar-title">CONTACT</div>
-                  <div class="contact-item">ðŸ“§ ${safeData.email}</div>
-                  <div class="contact-item">ðŸ“± ${safeData.phone}</div>
-                  <div class="contact-item">ðŸ”— ${safeData.linkedin_url}</div>
+                  <div class="contact-item">📧 ${safeData.email}</div>
+                  <div class="contact-item">📱 ${safeData.phone}</div>
+                  <div class="contact-item">🔗 ${safeData.linkedin_url}</div>
                 </div>
                 <div class="sidebar-section">
                   <div class="sidebar-title">SKILLS</div>
@@ -1514,7 +1165,7 @@ const ResumeScreen = () => {
                 </div>
                 <div class="sidebar-section">
                   <div class="sidebar-title">LANGUAGES</div>
-                  ${safeData.languages.map(lang => `<div class="contact-item">â€¢ ${lang}</div>`).join('')}
+                  ${safeData.languages.map(lang => `<div class="contact-item">• ${lang}</div>`).join('')}
                 </div>
               </div>
               <div class="content">
@@ -1573,32 +1224,8 @@ const ResumeScreen = () => {
             <meta charset="utf-8" />
             <title>Resume - ${safeData.name}</title>
             <style>
-              @page { 
-                size: A4; 
-                margin: 0; 
-                padding: 0;
-              }
-              * { 
-                box-sizing: border-box; 
-                margin: 0; 
-                padding: 0; 
-              }
-              body { 
-                font-family: Helvetica, Arial, sans-serif; 
-                margin: 0; 
-                background: #ffffff; 
-                line-height: 1.5; 
-                width: 210mm;
-                min-height: 297mm;
-              }
-              .container { 
-                width: 100%; 
-                min-height: 100vh; 
-                display: flex; 
-                box-shadow: none; 
-                border-radius: 0; 
-                overflow: hidden; 
-              }
+              body { font-family: Helvetica, Arial, sans-serif; margin: 20px; background: #ffffff; line-height: 1.5; }
+              .container { max-width: 900px; margin: auto; display: flex; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 16px; overflow: hidden; }
               .content { width: 62%; padding: 25px; background: #ffffff; }
               .sidebar { width: 38%; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 25px; border-left: 4px solid #7c3aed; }
               .header { margin-bottom: 25px; }
@@ -1611,11 +1238,7 @@ const ResumeScreen = () => {
               .item-subtitle { font-size: 14px; color: #6b7280; font-style: italic; }
               .item-detail { font-size: 14px; color: #475569; margin-top: 5px; }
               .profile-section { text-align: center; margin-bottom: 25px; }
-              .profile-image { margin-bottom: 15px; }
-              .avatar-circle { width: 80px; height: 80px; background: #7c3aed; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; border: 3px solid #a855f7; }
-              .avatar-initials { font-size: 28px; color: white; font-weight: 700; }
-              .profile-name { color: #7c3aed; font-size: 18px; font-weight: 700; margin-bottom: 5px; }
-              .profile-title { color: #6b7280; font-size: 14px; font-weight: 500; }
+              .profile-image { width: 80px; height: 80px; background: #7c3aed; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 40px; color: white; }
               .sidebar-section { margin-bottom: 25px; }
               .sidebar-title { font-size: 14px; color: #7c3aed; font-weight: 700; margin-bottom: 12px; letter-spacing: 1px; }
               .contact-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 13px; color: #374151; }
@@ -1677,14 +1300,14 @@ const ResumeScreen = () => {
               </div>
               <div class="sidebar">
                 <div class="profile-section">
-                  <div class="profile-image">ðŸ‘¤</div>
+                  <div class="profile-image">👤</div>
                 </div>
                 <div class="sidebar-section">
                   <div class="sidebar-title">CONTACT INFO</div>
-                  <div class="contact-item">ðŸ“§ ${safeData.email}</div>
-                  <div class="contact-item">ðŸ“± ${safeData.phone}</div>
-                  <div class="contact-item">ðŸ”— ${safeData.linkedin_url}</div>
-                  <div class="contact-item">ðŸ’» ${safeData.github_url}</div>
+                  <div class="contact-item">📧 ${safeData.email}</div>
+                  <div class="contact-item">📱 ${safeData.phone}</div>
+                  <div class="contact-item">🔗 ${safeData.linkedin_url}</div>
+                  <div class="contact-item">💻 ${safeData.github_url}</div>
                 </div>
                 <div class="sidebar-section">
                   <div class="sidebar-title">CORE SKILLS</div>
@@ -1692,7 +1315,7 @@ const ResumeScreen = () => {
                     <div class="skill-item">
                       <div class="skill-name">${skill}</div>
                       <div class="skill-rating">
-                        ${'â˜…'.repeat(4 + (i % 2))}${'â˜†'.repeat(5 - (4 + (i % 2)))}
+                        ${'★'.repeat(4 + (i % 2))}${'☆'.repeat(5 - (4 + (i % 2)))}
                       </div>
                     </div>
                   `).join('')}
@@ -1715,10 +1338,10 @@ const ResumeScreen = () => {
                   <div class="sidebar-title">CERTIFICATIONS</div>
                   ${safeData.certifications.map(cert => `
                     <div class="cert-item">
-                      <div class="cert-icon">âœ“</div>
+                      <div class="cert-icon">✓</div>
                       <div>
                         <div class="cert-text">${cert.name}</div>
-                        <div class="cert-org">${cert.organization} â€¢ ${cert.year}</div>
+                        <div class="cert-org">${cert.organization} • ${cert.year}</div>
                       </div>
                     </div>
                   `).join('')}
@@ -1729,282 +1352,7 @@ const ResumeScreen = () => {
         </html>
       `;
     } else if (idx === 3) {
-      // Creative Half-Side Resume (Green Theme)
-      return `
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <title>Resume - ${safeData.name}</title>
-            <style>
-              @page { 
-                size: A4; 
-                margin: 0; 
-                padding: 0;
-              }
-              * { 
-                box-sizing: border-box; 
-                margin: 0; 
-                padding: 0; 
-              }
-              body { 
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-                background: #ffffff; 
-                line-height: 1.6; 
-                color: #374151;
-                width: 210mm;
-                min-height: 297mm;
-                margin: 0 auto;
-              }
-              .container { 
-                width: 100%; 
-                min-height: 100vh;
-                display: flex;
-              }
-              .sidebar { 
-                width: 35%; 
-                background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%); 
-                padding: 25px; 
-                color: #ffffff;
-              }
-              .content { 
-                width: 65%; 
-                padding: 25px; 
-                background: #ffffff;
-              }
-              .profile-section { 
-                text-align: center; 
-                margin-bottom: 25px; 
-              }
-              .profile-image { 
-                width: 70px; 
-                height: 70px; 
-                background: rgba(255,255,255,0.2); 
-                border-radius: 50%; 
-                margin: 0 auto 15px; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                font-size: 24px; 
-                color: #ffffff;
-                border: 2px solid rgba(255,255,255,0.3);
-                font-weight: 700;
-              }
-              .name { 
-                font-size: 22px; 
-                color: #ffffff; 
-                font-weight: 800; 
-                text-align: center; 
-                margin-bottom: 5px; 
-              }
-              .role { 
-                font-size: 14px; 
-                color: #a7f3d0; 
-                font-weight: 600; 
-                text-align: center; 
-                margin-bottom: 20px; 
-              }
-              .sidebar-section { 
-                margin-bottom: 25px; 
-              }
-              .sidebar-title { 
-                font-size: 14px; 
-                color: #ffffff; 
-                font-weight: 700; 
-                margin-bottom: 15px; 
-                letter-spacing: 1px; 
-              }
-              .contact-item { 
-                display: flex; 
-                align-items: center; 
-                margin-bottom: 8px; 
-                font-size: 11px; 
-                color: #d1fae5; 
-              }
-              .contact-icon { 
-                margin-right: 8px; 
-                color: #a7f3d0; 
-              }
-              .skill-item { 
-                margin-bottom: 12px; 
-              }
-              .skill-name { 
-                color: #d1fae5; 
-                font-size: 12px; 
-                margin-bottom: 4px; 
-              }
-              .progress-bar { 
-                height: 4px; 
-                background: rgba(255,255,255,0.3); 
-                border-radius: 2px; 
-                overflow: hidden; 
-              }
-              .progress-fill { 
-                height: 100%; 
-                background: #34d399; 
-              }
-              .language-item { 
-                color: #d1fae5; 
-                font-size: 12px; 
-                margin-bottom: 6px; 
-              }
-              .section { 
-                margin-bottom: 25px; 
-              }
-              .section-header { 
-                margin-bottom: 10px; 
-              }
-              .section-title { 
-                color: #059669; 
-                font-size: 16px; 
-                font-weight: 700; 
-                margin-bottom: 10px; 
-              }
-              .section-line { 
-                height: 2px; 
-                background: #059669; 
-                width: 50px; 
-                margin-bottom: 15px; 
-              }
-              .item { 
-                margin-bottom: 20px; 
-                padding-left: 15px; 
-                border-left: 3px solid #d1fae5; 
-              }
-              .item-title { 
-                color: #059669; 
-                font-size: 15px; 
-                font-weight: 700; 
-              }
-              .item-subtitle { 
-                color: #6b7280; 
-                font-size: 13px; 
-                font-weight: 600; 
-              }
-              .item-detail { 
-                margin-top: 5px; 
-                line-height: 18px; 
-                font-size: 12px; 
-                color: #374151; 
-              }
-              .item-link { 
-                color: #10b981; 
-                font-weight: 600; 
-                margin-top: 3px; 
-                font-size: 10px; 
-              }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="sidebar">
-                <div class="profile-section">
-                  <div class="profile-image">${safeData.name.split(' ').map(n => n[0]).join('').toUpperCase()}</div>
-                  <div class="name">${safeData.name}</div>
-                  <div class="role">${safeData.branch}</div>
-                </div>
-                <div class="sidebar-section">
-                  <div class="sidebar-title">CONTACT</div>
-                  <div class="contact-item">
-                    <div class="contact-icon">📧</div>
-                    <div>${safeData.email}</div>
-                  </div>
-                  <div class="contact-item">
-                    <div class="contact-icon">📱</div>
-                    <div>${safeData.phone}</div>
-                  </div>
-                  <div class="contact-item">
-                    <div class="contact-icon">📍</div>
-                    <div>${safeData.address || 'Address'}</div>
-                  </div>
-                  <div class="contact-item">
-                    <div class="contact-icon">🔗</div>
-                    <div>${safeData.linkedin_url}</div>
-                  </div>
-                </div>
-                <div class="sidebar-section">
-                  <div class="sidebar-title">SKILLS</div>
-                  ${safeData.skills.slice(0, 8).map((skill, i) => `
-                    <div class="skill-item">
-                      <div class="skill-name">${skill}</div>
-                      <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${85 + (i % 3) * 5}%"></div>
-                      </div>
-                    </div>
-                  `).join('')}
-                </div>
-                <div class="sidebar-section">
-                  <div class="sidebar-title">LANGUAGES</div>
-                  ${safeData.languages.map(lang => `
-                    <div class="language-item">• ${lang}</div>
-                  `).join('')}
-                </div>
-              </div>
-              <div class="content">
-                <div class="section">
-                  <div class="section-header">
-                    <div class="section-title">PROFESSIONAL SUMMARY</div>
-                    <div class="section-line"></div>
-                  </div>
-                  <div class="item-detail">${safeData.objective}</div>
-                </div>
-                <div class="section">
-                  <div class="section-header">
-                    <div class="section-title">WORK EXPERIENCE</div>
-                    <div class="section-line"></div>
-                  </div>
-                  ${safeData.work_experience.map(exp => `
-                    <div class="item">
-                      <div class="item-title">${exp.role}</div>
-                      <div class="item-subtitle">${exp.company} | ${exp.duration}</div>
-                      <div class="item-detail">${exp.description}</div>
-                    </div>
-                  `).join('')}
-                </div>
-                <div class="section">
-                  <div class="section-header">
-                    <div class="section-title">EDUCATION</div>
-                    <div class="section-line"></div>
-                  </div>
-                  ${safeData.education.map(edu => `
-                    <div class="item">
-                      <div class="item-title">${edu.degree}</div>
-                      <div class="item-subtitle">${edu.institute} | ${edu.year}</div>
-                      <div class="item-detail">${edu.field} ${edu.grade ? '• Grade: ' + edu.grade : ''}</div>
-                    </div>
-                  `).join('')}
-                </div>
-                <div class="section">
-                  <div class="section-header">
-                    <div class="section-title">KEY PROJECTS</div>
-                    <div class="section-line"></div>
-                  </div>
-                  ${safeData.projects.map(proj => `
-                    <div class="item">
-                      <div class="item-title">${proj.title}</div>
-                      <div class="item-detail">${proj.description}</div>
-                      <div class="item-link">${proj.technologies ? 'Tech: ' + proj.technologies : ''}</div>
-                    </div>
-                  `).join('')}
-                </div>
-                <div class="section">
-                  <div class="section-header">
-                    <div class="section-title">CERTIFICATIONS</div>
-                    <div class="section-line"></div>
-                  </div>
-                  ${safeData.certifications.map(cert => `
-                    <div class="item">
-                      <div class="item-title">${cert.name}</div>
-                      <div class="item-detail">${cert.organization} • ${cert.year}</div>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            </div>
-          </body>
-        </html>
-      `;
-    } else if (idx === 4) {
-      // Modern Half-Side Resume (Orange Theme)
+      // Executive Professional Template
       return `
         <html>
           <head>
@@ -2206,14 +1554,14 @@ const ResumeScreen = () => {
             <div class="container">
               <div class="header">
                 <div class="profile">
-                  <div class="profile-image">ðŸ‘¤</div>
+                  <div class="profile-image">👤</div>
                   <div class="profile-info">
                     <h1>${safeData.name}</h1>
                     <div class="title">${safeData.branch}</div>
                     <div class="contact-row">
-                      <div class="contact-item">ðŸ“§ ${safeData.email}</div>
-                      <div class="contact-item">ðŸ“± ${safeData.phone}</div>
-                      <div class="contact-item">ðŸ”— ${safeData.linkedin_url}</div>
+                      <div class="contact-item">📧 ${safeData.email}</div>
+                      <div class="contact-item">📱 ${safeData.phone}</div>
+                      <div class="contact-item">🔗 ${safeData.linkedin_url}</div>
                     </div>
                   </div>
                 </div>
@@ -2286,10 +1634,10 @@ const ResumeScreen = () => {
                       </div>
                       ${safeData.certifications.map(cert => `
                         <div class="cert-item">
-                          <div class="cert-icon">âœ“</div>
+                          <div class="cert-icon">✓</div>
                           <div>
                             <div class="cert-text">${cert.name}</div>
-                            <div class="cert-org">${cert.organization} â€¢ ${cert.year}</div>
+                            <div class="cert-org">${cert.organization} • ${cert.year}</div>
                           </div>
                         </div>
                       `).join('')}
@@ -2595,7 +1943,7 @@ const ResumeScreen = () => {
                       ${safeData.education.map(edu => `
                         <div class="education-item">
                           <div class="education-degree">${edu.degree}</div>
-                          <div class="education-details">${edu.field} â€¢ ${edu.institute}</div>
+                          <div class="education-details">${edu.field} • ${edu.institute}</div>
                           <div class="education-details">${edu.year}</div>
                           <div class="education-grade">${edu.grade || ''}</div>
                         </div>
@@ -2622,124 +1970,6 @@ const ResumeScreen = () => {
           </body>
         </html>
       `;
-    } else if (idx === 3) {
-      // Creative Half-Side Resume (Green Theme)
-      return `
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <title>Resume - ${safeData.name}</title>
-            <style>
-              body { font-family: Helvetica, Arial, sans-serif; margin: 0; background: #ffffff; line-height: 1.5; }
-              .container { max-width: 900px; margin: auto; display: flex; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 16px; overflow: hidden; }
-              .sidebar { width: 35%; background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%); padding: 25px; color: #ffffff; }
-              .content { width: 65%; padding: 25px; background: #ffffff; }
-              .profile-section { text-align: center; margin-bottom: 30px; }
-              .profile-image { width: 70px; height: 70px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 35px; }
-              .name { font-size: 22px; color: #ffffff; font-weight: 800; margin-bottom: 5px; }
-              .role { font-size: 14px; color: #a7f3d0; font-weight: 600; }
-              .sidebar-section { margin-bottom: 25px; }
-              .sidebar-title { font-size: 14px; color: #ffffff; font-weight: 700; margin-bottom: 15px; letter-spacing: 1px; }
-              .contact-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 11px; color: #d1fae5; }
-              .contact-icon { margin-right: 8px; }
-              .skill-item { margin-bottom: 12px; }
-              .skill-name { font-size: 12px; color: #d1fae5; margin-bottom: 4px; }
-              .progress-bar { height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; }
-              .progress-fill { height: 100%; background: #34d399; }
-              .section { margin-bottom: 25px; }
-              .section-title { font-size: 16px; color: #059669; font-weight: 700; margin-bottom: 10px; }
-              .section-line { height: 2px; background: #059669; width: 50px; margin-bottom: 15px; }
-              .item { margin-bottom: 20px; padding-left: 15px; border-left: 3px solid #d1fae5; }
-              .item-title { font-size: 15px; font-weight: 700; color: #059669; }
-              .item-subtitle { font-size: 13px; color: #6b7280; font-weight: 600; }
-              .item-detail { font-size: 12px; color: #374151; margin-top: 5px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="sidebar">
-                <div class="profile-section">
-                  <div class="profile-image">${safeData.name.split(' ').map(n => n[0]).join('').toUpperCase()}</div>
-                  <div class="name">${safeData.name}</div>
-                  <div class="role">${safeData.branch}</div>
-                </div>
-                <div class="sidebar-section">
-                  <div class="sidebar-title">CONTACT</div>
-                  <div class="contact-item">📧 ${safeData.email}</div>
-                  <div class="contact-item">📱 ${safeData.phone}</div>
-                  <div class="contact-item">📍 ${safeData.address || 'Address'}</div>
-                  <div class="contact-item">🔗 ${safeData.linkedin_url}</div>
-                </div>
-                <div class="sidebar-section">
-                  <div class="sidebar-title">SKILLS</div>
-                  ${safeData.skills.slice(0, 8).map((skill, i) => `
-                    <div class="skill-item">
-                      <div class="skill-name">${skill}</div>
-                      <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${85 + (i % 3) * 5}%"></div>
-                      </div>
-                    </div>
-                  `).join('')}
-                </div>
-                <div class="sidebar-section">
-                  <div class="sidebar-title">LANGUAGES</div>
-                  ${safeData.languages.map(lang => `<div class="contact-item">• ${lang}</div>`).join('')}
-                </div>
-              </div>
-              <div class="content">
-                <div class="section">
-                  <div class="section-title">PROFESSIONAL SUMMARY</div>
-                  <div class="section-line"></div>
-                  <div class="item-detail">${safeData.objective}</div>
-                </div>
-                <div class="section">
-                  <div class="section-title">WORK EXPERIENCE</div>
-                  <div class="section-line"></div>
-                  ${safeData.work_experience.map(exp => `
-                    <div class="item">
-                      <div class="item-title">${exp.role}</div>
-                      <div class="item-subtitle">${exp.company} | ${exp.duration}</div>
-                      <div class="item-detail">${exp.description}</div>
-                    </div>
-                  `).join('')}
-                </div>
-                <div class="section">
-                  <div class="section-title">EDUCATION</div>
-                  <div class="section-line"></div>
-                  ${safeData.education.map(edu => `
-                    <div class="item">
-                      <div class="item-title">${edu.degree}</div>
-                      <div class="item-subtitle">${edu.institute} | ${edu.year}</div>
-                      <div class="item-detail">${edu.field} ${edu.grade ? '• Grade: ' + edu.grade : ''}</div>
-                    </div>
-                  `).join('')}
-                </div>
-                <div class="section">
-                  <div class="section-title">KEY PROJECTS</div>
-                  <div class="section-line"></div>
-                  ${safeData.projects.map(proj => `
-                    <div class="item">
-                      <div class="item-title">${proj.title}</div>
-                      <div class="item-detail">${proj.description}</div>
-                      <div class="item-detail" style="color: #10b981; font-weight: 600;">${proj.technologies ? 'Tech: ' + proj.technologies : ''}</div>
-                    </div>
-                  `).join('')}
-                </div>
-                <div class="section">
-                  <div class="section-title">CERTIFICATIONS</div>
-                  <div class="section-line"></div>
-                  ${safeData.certifications.map(cert => `
-                    <div class="item">
-                      <div class="item-detail">${cert.name} | ${cert.organization} | ${cert.year}</div>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            </div>
-          </body>
-        </html>
-      `;
-
     }
     return `<html><body><div>No template selected</div></body></html>`;
   };
@@ -2756,9 +1986,10 @@ const ResumeScreen = () => {
   const getTemplateName = (idx) => {
     const names = [
       'Modern Tech',
+      'Half-Shaded Pro', 
+      'Creative Modern',
       'Executive Premium',
-      'Elegant Professional',
-      'Creative Green'
+      'Creative Designer'
     ];
     return names[idx] || 'Template';
   };
@@ -2766,9 +1997,10 @@ const ResumeScreen = () => {
   const getTemplateDescription = (idx) => {
     const descriptions = [
       'Blue gradient tech theme',
+      'Modern with dark sidebar',
+      'Contemporary purple theme', 
       'Premium executive design',
-      'Elegant minimalist design',
-      'Green half-side creative'
+      'Green & orange creative'
     ];
     return descriptions[idx] || 'Professional template';
   };
@@ -2776,8 +2008,9 @@ const ResumeScreen = () => {
   const getTemplateColor = (idx) => {
     const colors = [
       '#1e40af', // Blue
+      '#1e293b', // Dark blue
+      '#7c3aed', // Purple
       '#0f172a', // Dark
-      '#6366f1', // Indigo
       '#059669'  // Green
     ];
     return colors[idx] || '#0284c7';
@@ -2786,9 +2019,10 @@ const ResumeScreen = () => {
   const getTemplateIcon = (idx) => {
     const icons = [
       'code',
+      'business',
+      'palette',
       'star',
-      'design-services',
-      'nature'
+      'brush'
     ];
     return icons[idx] || 'description';
   };
@@ -2796,56 +2030,12 @@ const ResumeScreen = () => {
   const getTemplateCategory = (idx) => {
     const categories = [
       'Tech',
-      'Executive',
-      'Professional',
-      'Creative'
+      'Business',
+      'Creative',
+      'Executive', 
+      'Designer'
     ];
     return categories[idx] || 'Professional';
-  };
-
-  const handleSaveToDevice = async () => {
-    try {
-      if (selectedTemplate === null || !studentData) {
-        Alert.alert('Error', 'Please select a template and ensure profile data is loaded.');
-        return;
-      }
-      setLoading(true);
-      
-      const html = getTemplateHTML(selectedTemplate, studentData);
-      
-      // Generate PDF
-      const { uri } = await Print.printToFileAsync({ 
-        html,
-        width: 595,
-        height: 842,
-        margins: { left: 0, top: 0, right: 0, bottom: 0 },
-        base64: false,
-      });
-      
-      const fileName = `Resume_${studentData.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      
-      // Always use sharing for reliable cross-platform saving
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
-          mimeType: 'application/pdf',
-          dialogTitle: 'Save Resume to Device',
-          UTI: 'com.adobe.pdf',
-        });
-        
-        Alert.alert(
-          'Save Resume', 
-          `Choose where to save "${fileName}":\n\n• Downloads folder\n• Google Drive\n• Files app\n• Other storage locations\n\nThe PDF will be saved as a proper file that you can access anytime.`,
-          [{ text: 'OK' }]
-        );
-      } else {
-        Alert.alert('Error', 'File saving is not available on this device.');
-      }
-    } catch (error) {
-      console.error('Save error:', error);
-      Alert.alert('Error', `Failed to save resume: ${error.message || 'Unknown error'}`);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleShare = async () => {
@@ -2856,21 +2046,17 @@ const ResumeScreen = () => {
       }
       setLoading(true);
       const html = getTemplateHTML(selectedTemplate, studentData);
-      
-      // Improved PDF generation settings for better quality and full page rendering
       const { uri } = await Print.printToFileAsync({ 
         html,
-        width: 595, // A4 width in points (210mm)
-        height: 842, // A4 height in points (297mm)
+        width: 612,
+        height: 792,
         margins: {
           left: 0,
           top: 0,
           right: 0,
           bottom: 0,
         },
-        base64: false,
       });
-      
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: 'application/pdf',
@@ -2909,110 +2095,22 @@ const ResumeScreen = () => {
         return;
       }
       setLoading(true);
-      
       const html = getTemplateHTML(selectedTemplate, studentData);
-      
-      // Improved PDF generation settings for better quality and full page rendering
       const { uri } = await Print.printToFileAsync({ 
         html,
-        width: 595, // A4 width in points (210mm)
-        height: 842, // A4 height in points (297mm)
+        width: 612,
+        height: 792,
         margins: {
           left: 0,
           top: 0,
           right: 0,
           bottom: 0,
         },
-        base64: false,
       });
-      
       const fileName = `Resume_${studentData.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      
-      if (Platform.OS === 'android') {
-        // For Android - Use sharing with save option
-        try {
-          if (await Sharing.isAvailableAsync()) {
-            await Sharing.shareAsync(uri, {
-              mimeType: 'application/pdf',
-              dialogTitle: 'Save Resume PDF',
-              UTI: 'com.adobe.pdf',
-            });
-            Alert.alert(
-              'Download Ready', 
-              `Your resume "${fileName}" is ready!\n\nUse the share dialog to:\n• Save to Downloads folder\n• Save to Google Drive\n• Share via email/messaging\n• Save to other apps`,
-              [
-                {
-                  text: 'OK',
-                  onPress: () => {
-                    console.log('Resume shared for download');
-                  }
-                }
-              ]
-            );
-          } else {
-            throw new Error('Sharing not available');
-          }
-        } catch (androidError) {
-          console.log('Android sharing error:', androidError);
-          // Final fallback - save to app's document directory
-          const finalUri = `${FileSystem.documentDirectory}${fileName}`;
-          await FileSystem.moveAsync({ from: uri, to: finalUri });
-          Alert.alert(
-            'Saved to App Storage', 
-            `Resume saved to app storage!\n\nFile: ${fileName}\n\nNote: To access this file externally, please use the share feature instead.`,
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  console.log('Resume saved to app storage');
-                }
-              }
-            ]
-          );
-        }
-        
-      } else if (Platform.OS === 'ios') {
-        // For iOS - Use sharing to save to Files app
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(uri, {
-            mimeType: 'application/pdf',
-            dialogTitle: 'Save Resume PDF',
-            UTI: 'com.adobe.pdf',
-          });
-          Alert.alert(
-            'Success', 
-            'Resume ready to save!\n\nUse the share dialog to save your resume to Files app or other locations.',
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  console.log('Resume shared for iOS');
-                }
-              }
-            ]
-          );
-        } else {
-          throw new Error('Sharing not available on this device');
-        }
-        
-      } else {
-        // For other platforms - fallback to document directory
-        const finalUri = `${FileSystem.documentDirectory}${fileName}`;
-        await FileSystem.moveAsync({ from: uri, to: finalUri });
-        Alert.alert(
-          'Success', 
-          `Resume saved successfully!\n\nLocation: Documents/${fileName}`,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                console.log('Resume saved to documents');
-              }
-            }
-          ]
-        );
-      }
-      
+      const newUri = `${FileSystem.documentDirectory}${fileName}`;
+      await FileSystem.moveAsync({ from: uri, to: newUri });
+      Alert.alert('Success', `Resume saved successfully!\n\nLocation: Documents/${fileName}`);
     } catch (error) {
       console.error('Download error:', error);
       Alert.alert('Error', `Failed to download resume: ${error.message || 'Unknown error'}`);
@@ -3162,22 +2260,15 @@ const ResumeScreen = () => {
             style={[styles.modalActionButton, styles.modalShareButton]} 
             onPress={handleShare}
           >
-            <MaterialIcons name="share" size={16} color="#10b981" />
-            <Text style={[styles.modalActionButtonText, { color: '#10b981', fontSize: 12 }]}>Share</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.modalActionButton, styles.modalSaveButton]} 
-            onPress={handleSaveToDevice}
-          >
-            <MaterialIcons name="save-alt" size={16} color="#ffffff" />
-            <Text style={[styles.modalActionButtonText, { color: '#ffffff', fontSize: 12 }]}>Save to Device</Text>
+            <MaterialIcons name="share" size={18} color="#10b981" />
+            <Text style={[styles.modalActionButtonText, { color: '#10b981' }]}>Share</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.modalActionButton, styles.modalDownloadButton]} 
             onPress={handleDownload}
           >
-            <MaterialIcons name="download" size={16} color="#ffffff" />
-            <Text style={[styles.modalActionButtonText, { color: '#ffffff', fontSize: 12 }]}>Quick Download</Text>
+            <MaterialIcons name="download" size={18} color="#ffffff" />
+            <Text style={[styles.modalActionButtonText, { color: '#ffffff' }]}>Download PDF</Text>
           </TouchableOpacity>
         </View>
       </ResumeModal>
@@ -4009,7 +3100,7 @@ const styles = StyleSheet.create({
   },
   modalActionBar: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
     marginTop: 20,
     paddingTop: 15,
     borderTopWidth: 1,
@@ -4020,19 +3111,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    gap: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    gap: 6,
     borderWidth: 2,
   },
   modalShareButton: {
     backgroundColor: '#f0fdf4',
     borderColor: '#bbf7d0',
-  },
-  modalSaveButton: {
-    backgroundColor: '#059669',
-    borderColor: '#059669',
   },
   modalDownloadButton: {
     backgroundColor: '#3b82f6',
@@ -4322,148 +3409,6 @@ const styles = StyleSheet.create({
   creativeCertificationBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  // Creative Half-Side Template Styles
-  creativeContainer: {
-    flexDirection: 'row',
-    minHeight: 600,
-  },
-  creativeSidebar: {
-    justifyContent: 'flex-start',
-  },
-  creativeSkillItem: {
-    marginBottom: 12,
-  },
-  creativeSkillName: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  creativeProgressBar: {
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  creativeProgressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  creativeSectionLine: {
-    height: 2,
-    width: 50,
-    marginBottom: 15,
-  },
-  // Modern Half-Side Template Styles
-  modernContainer: {
-    flexDirection: 'row',
-    minHeight: 600,
-  },
-  modernContent: {
-    backgroundColor: '#ffffff',
-  },
-  modernSidebar: {
-    justifyContent: 'flex-start',
-  },
-  modernHeader: {
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  modernHeaderLine: {
-    height: 3,
-    width: 80,
-  },
-  modernSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  modernTimeline: {
-    position: 'absolute',
-    left: -6,
-    top: 5,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  modernProfile: {
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  modernImageContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  modernContactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 6,
-  },
-  modernContactText: {
-    fontSize: 11,
-    fontFamily: 'System',
-  },
-  modernSkillsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  modernSkillBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 4,
-  },
-  modernSkillText: {
-    fontSize: 10,
-    color: '#ffffff',
-    fontWeight: '600',
-    fontFamily: 'System',
-  },
-  modernLanguageItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  modernLanguageText: {
-    fontSize: 12,
-    fontFamily: 'System',
-  },
-  modernLanguageLevel: {
-    flexDirection: 'row',
-    gap: 3,
-  },
-  modernLevelDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  modernCertItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 8,
-  },
-  modernCertText: {
-    flex: 1,
-  },
-  modernCertName: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginBottom: 2,
-    fontFamily: 'System',
-  },
-  modernCertOrg: {
-    fontSize: 9,
-    fontFamily: 'System',
   },
 });
 

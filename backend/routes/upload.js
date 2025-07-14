@@ -110,4 +110,74 @@ router.post('/files', auth, upload.array('files', 5), (req, res) => {
   }
 });
 
+// Configure multer for profile image uploads
+const profileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '../uploads/profiles');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    // Generate unique filename with user ID prefix
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const extension = path.extname(file.originalname);
+    cb(null, `profile-${req.user.id}-${uniqueSuffix}${extension}`);
+  }
+});
+
+// File filter for profile images (only images allowed)
+const profileImageFilter = (req, file, cb) => {
+  const allowedTypes = [
+    'image/jpeg',
+    'image/jpg', 
+    'image/png',
+    'image/gif'
+  ];
+
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only images (JPEG, PNG, GIF) are allowed for profile pictures.'), false);
+  }
+};
+
+const profileUpload = multer({
+  storage: profileStorage,
+  fileFilter: profileImageFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit for profile images
+  }
+});
+
+// Upload profile image
+router.post('/profile-image', auth, profileUpload.single('profileImage'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No profile image uploaded' });
+    }
+
+    const imageUrl = `/uploads/profiles/${req.file.filename}`;
+    
+    res.json({
+      success: true,
+      profileImage: {
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        url: imageUrl
+      }
+    });
+  } catch (error) {
+    console.error('Profile image upload error:', error);
+    if (error.message.includes('Invalid file type')) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Profile image upload failed' });
+    }
+  }
+});
+
 module.exports = router;

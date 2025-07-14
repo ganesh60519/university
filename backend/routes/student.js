@@ -209,7 +209,11 @@ router.put('/profile', auth, async (req, res) => {
     }
 
     // Define allowed fields to prevent SQL injection
-    const allowedFields = ['name', 'email', 'branch'];
+    const allowedFields = [
+      'name', 'email', 'branch', 'phone', 'address', 'profile_picture', 
+      'dob', 'father_name', 'mother_name', 'linkedin_url', 'github_url', 
+      'portfolio_url', 'objective'
+    ];
     const updateFields = Object.keys(updates).filter(field => allowedFields.includes(field));
 
     if (updateFields.length === 0) {

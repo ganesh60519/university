@@ -19,7 +19,7 @@ const HomeScreen = (props) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [sidebarVisible, setSidebarVisible] = useState(false);
+
   const navigation = props.navigation;
   
   // Animation values
@@ -27,7 +27,7 @@ const HomeScreen = (props) => {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const cardAnimations = useRef([...Array(4)].map(() => new Animated.Value(1))).current;
-  const sidebarAnim = useRef(new Animated.Value(-300)).current;
+
 
   useEffect(() => {
     let isMounted = true;
@@ -148,24 +148,7 @@ const HomeScreen = (props) => {
     return 'Good Evening';
   };
 
-  const toggleSidebar = () => {
-    const toValue = sidebarVisible ? -300 : 0;
-    Animated.timing(sidebarAnim, {
-      toValue,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-    setSidebarVisible(!sidebarVisible);
-  };
 
-  const closeSidebar = () => {
-    Animated.timing(sidebarAnim, {
-      toValue: -300,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-    setSidebarVisible(false);
-  };
 
   return (
     <>
@@ -187,14 +170,10 @@ const HomeScreen = (props) => {
           >
             <View style={styles.headerContent}>
               <View style={styles.headerTopRow}>
-                <TouchableOpacity style={styles.menuButton} onPress={toggleSidebar}>
-                  <Feather name="menu" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
                 <View style={styles.headerCenter}>
                   <Text style={styles.greetingText}>{getCurrentGreeting()}</Text>
                   <Text style={styles.studentName}>{profile?.name || 'Student'}</Text>
                 </View>
-             
               </View>
               <Text style={styles.universityText}>Mahatma Gandhi University</Text>
               
@@ -235,9 +214,6 @@ const HomeScreen = (props) => {
                 <MaterialIcons name="person" size={24} color="#667eea" />
               </View>
               <Text style={styles.infoTitle}>Student Information</Text>
-              <TouchableOpacity style={styles.editButton}>
-                <Feather name="edit-2" size={18} color="#667eea" />
-              </TouchableOpacity>
             </View>
             
             <View style={styles.infoContent}>
@@ -298,6 +274,7 @@ const HomeScreen = (props) => {
             </LinearGradient>
           </TouchableOpacity>
         </View>
+        
 
         {/* Statistics Cards */}
         <View style={styles.statsContainer}>
@@ -321,69 +298,7 @@ const HomeScreen = (props) => {
         </View>
       </ScrollView>
 
-      {/* Sidebar */}
-      {sidebarVisible && (
-        <TouchableOpacity 
-          style={styles.sidebarOverlay} 
-          activeOpacity={1} 
-          onPress={closeSidebar}
-        >
-          <Animated.View 
-            style={[
-              styles.sidebar,
-              {
-                transform: [{ translateX: sidebarAnim }]
-              }
-            ]}
-          >
-            <TouchableOpacity activeOpacity={1}>
-              <LinearGradient
-                colors={['#667eea', '#764ba2']}
-                style={styles.sidebarGradient}
-              >
-                <View style={styles.sidebarHeader}>
-                  <TouchableOpacity style={styles.closeButton} onPress={closeSidebar}>
-                    <Feather name="x" size={24} color="#FFFFFF" />
-                  </TouchableOpacity>
-                  <Text style={styles.sidebarTitle}>Quick Actions</Text>
-                </View>
 
-                <View style={styles.sidebarContent}>
-                  {[
-                    { name: 'Tasks', icon: 'assignment', route: 'Tasks', count: '5' },
-                    { name: 'Tickets', icon: 'confirmation-number', route: 'Tickets', count: '2' },
-                    { name: 'Attendance', icon: 'calendar-today', route: 'Attendance', count: '85%' },
-                    { name: 'Profile', icon: 'person', route: 'Profile', count: '' }
-                  ].map((item, index) => (
-                    <TouchableOpacity
-                      key={item.name}
-                      style={styles.sidebarItem}
-                      onPress={() => {
-                        navigation.navigate(item.route);
-                        closeSidebar();
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.sidebarItemContent}>
-                        <View style={styles.sidebarIconContainer}>
-                          <MaterialIcons name={item.icon} size={24} color="#FFFFFF" />
-                        </View>
-                        <Text style={styles.sidebarItemText}>{item.name}</Text>
-                        {item.count && (
-                          <View style={styles.sidebarBadge}>
-                            <Text style={styles.sidebarBadgeText}>{item.count}</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Feather name="chevron-right" size={20} color="rgba(255, 255, 255, 0.7)" />
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          </Animated.View>
-        </TouchableOpacity>
-      )}
     </>
   );
 };
@@ -1457,11 +1372,7 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 20,
   },
-  menuButton: {
-    padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
-  },
+
   headerCenter: {
     flex: 1,
     alignItems: 'center',
@@ -1561,11 +1472,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
   },
-  editButton: {
-    padding: 8,
-    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-    borderRadius: 15,
-  },
+
   infoContent: {
     gap: 16,
   },
@@ -2269,97 +2176,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  // Sidebar Styles
-  sidebarOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 1000,
-  },
-  sidebar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    width: 300,
-    zIndex: 1001,
-  },
-  sidebarGradient: {
-    flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-  },
-  sidebarHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  closeButton: {
-    padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
-  },
-  sidebarTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    flex: 1,
-    textAlign: 'center',
-    marginRight: 40,
-  },
-  sidebarContent: {
-    flex: 1,
-    paddingTop: 20,
-  },
-  sidebarItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  sidebarItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  sidebarIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  sidebarItemText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    flex: 1,
-  },
-  sidebarBadge: {
-    backgroundColor: '#ff6b6b',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginRight: 10,
-    minWidth: 24,
-    alignItems: 'center',
-  },
-  sidebarBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
+
 });
 
 export default StudentDashboard;
