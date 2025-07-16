@@ -10,28 +10,33 @@ import ResumeScreen from './screens/students/resumeScreen';
 
 import FacultyDashboard from './screens/faculty/FacultyDashboard';
 import AdminDashboard from './screens/admin/AdminDashboard';
+import { NetworkProvider } from './contexts/NetworkContext';
+import GlobalNetworkModal from './components/GlobalNetworkModal';
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator 
-        initialRouteName="Login"
-        screenOptions={{
-          headerShown: false
-        }}
-      >
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Registration" component={Registration} />
-        <Stack.Screen name="Forgetpassword" component={ForgetPassword} />
-        <Stack.Screen name="StudentDashboard" component={StudentDashboard} />
-        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-        <Stack.Screen name="Resume" component={ResumeScreen} />
-      
-        <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />
-        <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <NetworkProvider>
+      <NavigationContainer>
+        <Stack.Navigator 
+          initialRouteName="Login"
+          screenOptions={{
+            headerShown: false
+          }}
+        >
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="Registration" component={Registration} />
+          <Stack.Screen name="Forgetpassword" component={ForgetPassword} />
+          <Stack.Screen name="StudentDashboard" component={StudentDashboard} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          <Stack.Screen name="Resume" component={ResumeScreen} />
+        
+          <Stack.Screen name="FacultyDashboard" component={FacultyDashboard} />
+          <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
+        </Stack.Navigator>
+        <GlobalNetworkModal />
+      </NavigationContainer>
+    </NetworkProvider>
   );
 }

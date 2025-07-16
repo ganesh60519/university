@@ -19,7 +19,8 @@ import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-import { IP } from '../../ip'; // Ensure this file exists and exports a valid IP address
+import { IP } from '../../ip';
+import { useNetwork } from '../../contexts/NetworkContext';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +36,12 @@ const WhatsAppChatScreen = ({ navigation }) => {
   const [studentInfo, setStudentInfo] = useState(null);
   
   const flatListRef = useRef(null);
+  
+  const { showNetworkModal, retryConnection } = useNetwork();
+
+  const handleApiError = (error, operation) => {
+    console.error(`Error in ${operation}:`, error);
+  };
 
   useEffect(() => {
     fetchFaculty();
@@ -51,7 +58,7 @@ const WhatsAppChatScreen = ({ navigation }) => {
       });
       setStudentInfo(response.data);
     } catch (error) {
-      console.error('Error fetching student info:', error);
+      handleApiError(error, 'fetchStudentInfo');
     }
   };
 
@@ -65,7 +72,7 @@ const WhatsAppChatScreen = ({ navigation }) => {
       });
       setFaculty(response.data || []);
     } catch (error) {
-      console.error('Error fetching faculty:', error);
+      handleApiError(error, 'fetchFaculty');
     }
   };
 
@@ -80,7 +87,7 @@ const WhatsAppChatScreen = ({ navigation }) => {
       setConversationMessages(response.data || []);
       setTimeout(() => scrollToBottom(), 100);
     } catch (error) {
-      console.error('Error fetching conversation:', error);
+      handleApiError(error, 'fetchConversationMessages');
       setConversationMessages([]);
     }
   };
@@ -98,7 +105,6 @@ const WhatsAppChatScreen = ({ navigation }) => {
     const messageText = newMessage.trim();
     setNewMessage('');
 
-    // Add message to UI immediately for better UX
     const tempMessage = {
       id: Date.now(),
       message: messageText,
@@ -123,14 +129,11 @@ const WhatsAppChatScreen = ({ navigation }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Remove temp message and fetch updated conversation
       setConversationMessages(prev => prev.filter(msg => !msg.temp));
       fetchConversationMessages(currentChatFaculty.id);
     } catch (error) {
-      console.error('Error sending message:', error);
-      Alert.alert('Error', 'Failed to send message. Please try again.');
-      setNewMessage(messageText); // Restore message on error
-      // Remove temp message on error
+      handleApiError(error, 'sendMessage');
+      setNewMessage(messageText);
       setConversationMessages(prev => prev.filter(msg => !msg.temp));
     } finally {
       setSendingMessage(false);
@@ -141,7 +144,7 @@ const WhatsAppChatScreen = ({ navigation }) => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
-        Alert.alert('Permission Required', 'Please grant permission to access photos');
+        console.log('Permission denied for photo access');
         return;
       }
 
@@ -154,7 +157,6 @@ const WhatsAppChatScreen = ({ navigation }) => {
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
         
-        // Add image message to UI immediately
         const tempMessage = {
           id: Date.now(),
           message: imageUri,
@@ -167,7 +169,6 @@ const WhatsAppChatScreen = ({ navigation }) => {
         setConversationMessages(prev => [...prev, tempMessage]);
         setTimeout(() => scrollToBottom(), 100);
 
-        // Upload and send image
         const formData = new FormData();
         formData.append('file', {
           uri: imageUri,
@@ -199,21 +200,18 @@ const WhatsAppChatScreen = ({ navigation }) => {
               headers: { Authorization: `Bearer ${token}` }
             });
 
-            // Remove temp message and refresh
             setConversationMessages(prev => prev.filter(msg => !msg.temp));
             fetchConversationMessages(currentChatFaculty.id);
           } else {
             throw new Error('Upload failed');
           }
         } catch (uploadError) {
-          console.error('Upload error:', uploadError);
-          Alert.alert('Error', 'Failed to send image');
+          handleApiError(uploadError, 'uploadImage');
           setConversationMessages(prev => prev.filter(msg => !msg.temp));
         }
       }
     } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      handleApiError(error, 'pickImage');
     }
   };
 
@@ -296,7 +294,7 @@ const WhatsAppChatScreen = ({ navigation }) => {
                 <MaterialIcons 
                   name="done-all" 
                   size={16} 
-                  color={item.is_read ? "#4fc3f7" : "#90a4ae"} 
+                  color={item.is_read ? "#0288d1" : "#90a4ae"} 
                   style={styles.readIcon}
                 />
               )}
@@ -308,7 +306,7 @@ const WhatsAppChatScreen = ({ navigation }) => {
   };
 
   const getAvatarColor = (name) => {
-    const colors = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
+    const colors = ['#0288d1', '#0277bd', '#01579b', '#0288d1', '#039be5', '#03a9f4', '#29b6f6', '#4fc3f7', '#81d4fa', '#b3e5fc', '#e1f5fe', '#4fc3f7', '#29b6f6', '#0288d1'];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
   };
@@ -316,7 +314,7 @@ const WhatsAppChatScreen = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#25d366" />
+        <ActivityIndicator size="large" color="#4fc3f7" />
         <Text style={styles.loadingText}>Loading chats...</Text>
       </View>
     );
@@ -324,18 +322,10 @@ const WhatsAppChatScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* WhatsApp-style Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chats</Text>
-        {/* Removed headerActions (three-dot icon) */}
-        {/* <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton}>
-            <MaterialIcons name="more-vert" size={24} color="#ffffff" />
-          </TouchableOpacity>
-        </View> */}
       </View>
 
-      {/* Faculty Selection */}
       <View style={styles.facultySelection}>
         <View style={styles.pickerContainer}>
           <Picker
@@ -363,10 +353,9 @@ const WhatsAppChatScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Main Content Area */}
       <View style={styles.mainContent}>
         <View style={styles.welcomeContainer}>
-          <MaterialIcons name="chat-bubble-outline" size={100} color="#25d366" />
+          <MaterialIcons name="chat-bubble-outline" size={100} color="#4fc3f7" />
           <Text style={styles.welcomeTitle}>Welcome to Faculty Chat</Text>
           <Text style={styles.welcomeText}>
             Select a faculty member from the dropdown above to start a conversation.
@@ -377,7 +366,6 @@ const WhatsAppChatScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Chat Modal */}
       <Modal
         animationType="slide"
         transparent={false}
@@ -388,7 +376,6 @@ const WhatsAppChatScreen = ({ navigation }) => {
           style={styles.chatModal}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          {/* Chat Header */}
           <View style={styles.chatHeader}>
             <TouchableOpacity 
               style={styles.backButton}
@@ -410,22 +397,8 @@ const WhatsAppChatScreen = ({ navigation }) => {
                 </Text>
               </View>
             </View>
-
-            {/* Removed chatHeaderActions (video, call, more-vert) */}
-            {/* <View style={styles.chatHeaderActions}>
-              <TouchableOpacity style={styles.chatHeaderButton}>
-                <MaterialIcons name="videocam" size={24} color="#ffffff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.chatHeaderButton}>
-                <MaterialIcons name="call" size={24} color="#ffffff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.chatHeaderButton}>
-                <MaterialIcons name="more-vert" size={24} color="#ffffff" />
-              </TouchableOpacity>
-            </View> */}
           </View>
 
-          {/* Messages List */}
           <View style={styles.messagesContainer}>
             <FlatList
               ref={flatListRef}
@@ -437,18 +410,17 @@ const WhatsAppChatScreen = ({ navigation }) => {
               onContentSizeChange={scrollToBottom}
               ListEmptyComponent={
                 <View style={styles.emptyMessagesContainer}>
-                  <MaterialIcons name="chat" size={60} color="#bdc3c7" />
+                  <MaterialIcons name="chat" size={60} color="#b3e5fc" />
                   <Text style={styles.emptyMessagesText}>Start your conversation</Text>
                 </View>
               }
             />
           </View>
 
-          {/* Message Input */}
           <View style={styles.inputContainer}>
             <View style={styles.inputRow}>
               <TouchableOpacity style={styles.attachButton} onPress={pickImage}>
-                <MaterialIcons name="attach-file" size={24} color="#25d366" />
+                <MaterialIcons name="attach-file" size={24} color="#4fc3f7" />
               </TouchableOpacity>
               
               <View style={styles.textInputContainer}>
@@ -502,7 +474,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   header: {
-    backgroundColor: '#25d366',
+    backgroundColor: '#4fc3f7',
     paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
@@ -519,12 +491,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: '#ffffff',
-  },
-  headerActions: {
-    flexDirection: 'row',
-  },
-  headerButton: {
-    marginLeft: 20,
   },
   facultySelection: {
     backgroundColor: '#f5f5f5',
@@ -578,10 +544,10 @@ const styles = StyleSheet.create({
   },
   chatModal: {
     flex: 1,
-    backgroundColor: '#e5ddd5',
+    backgroundColor: '#e3f2fd',
   },
   chatHeader: {
-    backgroundColor: '#25d366',
+    backgroundColor: '#4fc3f7',
     paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 15,
@@ -624,13 +590,7 @@ const styles = StyleSheet.create({
   },
   chatHeaderStatus: {
     fontSize: 13,
-    color: '#b3e5d1',
-  },
-  chatHeaderActions: {
-    flexDirection: 'row',
-  },
-  chatHeaderButton: {
-    marginLeft: 20,
+    color: '#b3e5fc',
   },
   messagesContainer: {
     flex: 1,
@@ -678,7 +638,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   ownBubble: {
-    backgroundColor: '#dcf8c6',
+    backgroundColor: '#bbdefb',
     borderBottomRightRadius: 4,
   },
   otherBubble: {
@@ -691,7 +651,7 @@ const styles = StyleSheet.create({
   senderName: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#25d366',
+    color: '#0288d1',
     marginBottom: 2,
   },
   messageText: {
@@ -780,7 +740,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   sendButton: {
-    backgroundColor: '#25d366',
+    backgroundColor: '#4fc3f7',
     width: 45,
     height: 45,
     borderRadius: 22.5,

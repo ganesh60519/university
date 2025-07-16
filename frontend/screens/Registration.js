@@ -10,6 +10,8 @@ import {
   Platform,
   KeyboardAvoidingView,
   ActivityIndicator,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import axios from 'axios';
 import { IP } from '../ip';
@@ -23,6 +25,45 @@ const Registration = ({ navigation }) => {
   const [branch, setBranch] = useState('CSE');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Enhanced error handler for all network/API errors
+  const handleApiError = (error) => {
+    console.error('API Error:', error);
+    
+    // Handle different types of errors
+    if (!error.response) {
+      // Network error - no response from server
+      return {
+        title: 'Network Error',
+        message: 'Unable to connect to the server. Please check your internet connection and try again.'
+      };
+    }
+    
+    // Server responded with error status
+    const status = error.response.status;
+    
+    if (status === 404) {
+      return {
+        title: 'Network Error',
+        message: 'Service temporarily unavailable. Please check your internet connection and try again.'
+      };
+    } else if (status === 500) {
+      return {
+        title: 'Network Error',
+        message: 'Server error. Please check your internet connection and try again.'
+      };
+    } else if (status >= 400 && status < 500) {
+      return {
+        title: 'Network Error',
+        message: 'Please check your internet connection and try again.'
+      };
+    } else {
+      return {
+        title: 'Network Error',
+        message: 'Service temporarily unavailable. Please check your internet connection and try again.'
+      };
+    }
+  };
 
   const branches = [
     { label: 'Computer Science', value: 'CSE' },
@@ -67,9 +108,25 @@ const Registration = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      const errorMessage =
-        error.response?.data?.error || 'Registration failed. Please try again.';
-      Alert.alert('Error', errorMessage);
+      
+      // Use the enhanced error handler
+      let errorInfo;
+      
+      if (error.response?.status === 409) {
+        errorInfo = {
+          title: 'Email Already Exists',
+          message: 'An account with this email already exists. Please use a different email or try logging in.'
+        };
+      } else if (error.response?.status === 400) {
+        errorInfo = {
+          title: 'Registration Failed',
+          message: error.response.data?.error || 'Please check your information and try again.'
+        };
+      } else {
+        errorInfo = handleApiError(error);
+      }
+      
+      Alert.alert(errorInfo.title, errorInfo.message);
     } finally {
       setIsLoading(false);
     }
@@ -77,16 +134,22 @@ const Registration = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
       style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      testID="keyboard-avoiding-view"
     >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.innerContainer}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          testID="scroll-view"
+        >
+          <View style={styles.innerContainer}>
           <View style={styles.card}>
-            <Text style={styles.title}>Welcome Aboard</Text>
+            <Text style={styles.title}>Registration</Text>
             <Text style={styles.subtitle}>Create your account to begin</Text>
 
             <View style={styles.inputGroup}>
@@ -187,7 +250,7 @@ const Registration = ({ navigation }) => {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color="#ffffff" testID="loading-indicator" />
               ) : (
                 <Text style={styles.buttonText}>Sign Up</Text>
               )}
@@ -205,6 +268,7 @@ const Registration = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 };
@@ -212,20 +276,23 @@ const Registration = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f97316', // bg-orange-500
+    backgroundColor: '#f9fafb', // bg-gray-50
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingVertical: 32,
+    paddingVertical: 20,
+    paddingBottom: 40,
   },
   innerContainer: {
     paddingHorizontal: 16,
     width: '100%',
     alignSelf: 'center',
+    minHeight: '100%',
+    justifyContent: 'center',
   },
   card: {
-    backgroundColor: '#ffffff', // bg-white
+    backgroundColor: '#fef3c7', // wheat
     borderRadius: 16,
     padding: 24,
     shadowColor: '#000',

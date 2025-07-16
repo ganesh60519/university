@@ -11,7 +11,6 @@ import WhatsAppChatScreen from './WhatsAppChatScreen';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { LinearGradient } from 'expo-linear-gradient';
 
-
 const Tab = createBottomTabNavigator();
 
 // Home Screen Component
@@ -23,11 +22,8 @@ const HomeScreen = (props) => {
   const navigation = props.navigation;
   
   // Animation values
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const cardAnimations = useRef([...Array(4)].map(() => new Animated.Value(1))).current;
-
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
     let isMounted = true;
@@ -59,7 +55,6 @@ const HomeScreen = (props) => {
         });
         
         if (isMounted) {
-         // console.log('Profile data received:', response.data);
           setProfile(response.data);
         }
       } catch (error) {
@@ -83,7 +78,18 @@ const HomeScreen = (props) => {
         if (isMounted) {
           setLoading(false);
           // Start animations after loading
-          startAnimations();
+          Animated.parallel([
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+              toValue: 0,
+              duration: 600,
+              useNativeDriver: true,
+            })
+          ]).start();
         }
       }
     };
@@ -92,17 +98,8 @@ const HomeScreen = (props) => {
     return () => { isMounted = false; };
   }, []);
 
-  const startAnimations = () => {
-    // Content is already visible, no need for complex animations
-    fadeAnim.setValue(1);
-    slideAnim.setValue(0);
-    scaleAnim.setValue(1);
-    cardAnimations.forEach(anim => anim.setValue(1));
-  };
-
   const onRefresh = async () => {
     setRefreshing(true);
-    // Re-fetch profile data
     const token = await AsyncStorage.getItem('token');
     if (token) {
       try {
@@ -122,19 +119,12 @@ const HomeScreen = (props) => {
     return (
       <View style={styles.loadingContainer}>
         <LinearGradient
-          colors={['#667eea', '#764ba2']}
+          colors={['#3B82F6', '#1E40AF']}
           style={styles.loadingGradient}
         >
           <View style={styles.loadingContent}>
-            <View style={styles.loadingIconContainer}>
-              <ActivityIndicator size="large" color="#FFFFFF" />
-            </View>
-            <Text style={styles.loadingText}>Loading your dashboard...</Text>
-            <View style={styles.loadingDots}>
-              <View style={[styles.dot, styles.dot1]} />
-              <View style={[styles.dot, styles.dot2]} />
-              <View style={[styles.dot, styles.dot3]} />
-            </View>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+            <Text style={styles.loadingText}>Loading Dashboard...</Text>
           </View>
         </LinearGradient>
       </View>
@@ -148,11 +138,9 @@ const HomeScreen = (props) => {
     return 'Good Evening';
   };
 
-
-
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor="#4F46E5" />
+      <StatusBar barStyle="light-content" backgroundColor="#3B82F6" />
       <ScrollView 
         contentContainerStyle={styles.homeContainer}
         refreshControl={
@@ -160,145 +148,157 @@ const HomeScreen = (props) => {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Enhanced Header Section with Gradient */}
-        <View>
-          <LinearGradient
-            colors={['#667eea', '#764ba2', '#f093fb']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.headerGradient}
-          >
-            <View style={styles.headerContent}>
-              <View style={styles.headerTopRow}>
-                <View style={styles.headerCenter}>
-                  <Text style={styles.greetingText}>{getCurrentGreeting()}</Text>
-                  <Text style={styles.studentName}>{profile?.name || 'Student'}</Text>
-                </View>
+        {/* Header Section */}
+        <LinearGradient
+          colors={['#3B82F6', '#1E40AF']}
+          style={styles.headerGradient}
+        >
+          <Animated.View style={[styles.headerContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+            <Text style={styles.greetingText}>{getCurrentGreeting()}</Text>
+            <Text style={styles.studentName}>{profile?.name || 'Student'}</Text>
+            <Text style={styles.universityText}>Mahatma Gandhi University</Text>
+            <View style={styles.dateTimeContainer}>
+              <View style={styles.dateTimeItem}>
+                <Feather name="calendar" size={16} color="#FFFFFF" />
+                <Text style={styles.dateTimeText}>
+                  {new Date().toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </Text>
               </View>
-              <Text style={styles.universityText}>Mahatma Gandhi University</Text>
-              
-              {/* Weather-like info card */}
-              <View style={styles.weatherCard}>
-                <View style={styles.weatherInfo}>
-                  <Feather name="calendar" size={16} color="#FFFFFF" />
-                  <Text style={styles.weatherText}>
-                    {new Date().toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })}
-                  </Text>
-                </View>
-                <View style={styles.weatherInfo}>
-                  <Feather name="clock" size={16} color="#FFFFFF" />
-                  <Text style={styles.weatherText}>
-                    {new Date().toLocaleTimeString('en-US', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </Text>
-                </View>
+              <View style={styles.dateTimeItem}>
+                <Feather name="clock" size={16} color="#FFFFFF" />
+                <Text style={styles.dateTimeText}>
+                  {new Date().toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </Text>
               </View>
             </View>
-          </LinearGradient>
-        </View>
+          </Animated.View>
+        </LinearGradient>
 
-        {/* Enhanced Student Information Card */}
-        <View style={styles.infoCard}>
-          <LinearGradient
-            colors={['#FFFFFF', '#F8FAFC']}
-            style={styles.infoCardGradient}
-          >
+        {/* Student Information Card */}
+        <Animated.View style={[styles.infoCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <View style={styles.infoCardContent}>
             <View style={styles.infoHeader}>
-              <View style={styles.infoIconContainer}>
-                <MaterialIcons name="person" size={24} color="#667eea" />
-              </View>
-              <Text style={styles.infoTitle}>Student Information</Text>
+              <MaterialIcons name="person" size={24} color="#3B82F6" />
+              <Text style={styles.infoTitle}>Student Profile</Text>
             </View>
-            
-            <View style={styles.infoContent}>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIconWrapper}>
-                  <Feather name="user" size={18} color="#667eea" />
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Full Name</Text>
-                  <Text style={styles.infoValue}>{profile?.name || '-'}</Text>
-                </View>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <View style={styles.infoIconWrapper}>
-                  <Feather name="mail" size={18} color="#667eea" />
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Email Address</Text>
-                  <Text style={styles.infoValue}>{profile?.email || '-'}</Text>
-                </View>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <View style={styles.infoIconWrapper}>
-                  <Feather name="book" size={18} color="#667eea" />
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Branch</Text>
-                  <Text style={styles.infoValue}>{profile?.branch || '-'}</Text>
-                </View>
-              </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Name</Text>
+              <Text style={styles.infoValue}>{profile?.name || '-'}</Text>
             </View>
-          </LinearGradient>
-        </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.infoValue}>{profile?.email || '-'}</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Branch</Text>
+              <Text style={styles.infoValue}>{profile?.branch || '-'}</Text>
+            </View>
+          </View>
+        </Animated.View>
 
-        {/* Enhanced Resume Button */}
-        <View>
+        {/* Resume Button */}
+        <Animated.View style={[styles.resumeButtonContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <TouchableOpacity
             style={styles.resumeButton}
             onPress={() => navigation.navigate('Resume')}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
             <LinearGradient
-              colors={['#667eea', '#764ba2']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+              colors={['#3B82F6', '#1E40AF']}
               style={styles.resumeButtonGradient}
             >
-              <View style={styles.resumeIconContainer}>
-                <MaterialIcons name="description" size={26} color="#ffffff" />
-              </View>
-              <View style={styles.resumeTextContainer}>
-                <Text style={styles.resumeButtonText}>Create Resume</Text>
-                <Text style={styles.resumeButtonSubtext}>Build your professional profile</Text>
-              </View>
-              <Feather name="arrow-right" size={22} color="#ffffff" />
+              <MaterialIcons name="description" size={24} color="#FFFFFF" />
+              <Text style={styles.resumeButtonText}>Build Your Resume</Text>
             </LinearGradient>
           </TouchableOpacity>
-        </View>
-        
+        </Animated.View>
+
+        {/* Quick Access Cards */}
+        <Animated.View style={[styles.quickAccessContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <Text style={styles.quickAccessTitle}>Quick Access</Text>
+          <View style={styles.quickAccessGrid}>
+            <TouchableOpacity
+              style={styles.quickAccessCard}
+              onPress={() => navigation.navigate('Chat')}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['#10B981', '#059669']}
+                style={styles.quickAccessGradient}
+              >
+                <MaterialIcons name="chat" size={24} color="#FFFFFF" />
+                <Text style={styles.quickAccessText}>Chat</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.quickAccessCard}
+              onPress={() => navigation.navigate('Tickets')}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['#F59E0B', '#D97706']}
+                style={styles.quickAccessGradient}
+              >
+                <MaterialIcons name="confirmation-number" size={24} color="#FFFFFF" />
+                <Text style={styles.quickAccessText}>Tickets</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.quickAccessCard}
+              onPress={() => navigation.navigate('Attendance')}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['#3B82F6', '#1E40AF']}
+                style={styles.quickAccessGradient}
+              >
+                <MaterialIcons name="calendar-today" size={24} color="#FFFFFF" />
+                <Text style={styles.quickAccessText}>Attendance</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.quickAccessCard}
+              onPress={() => navigation.navigate('Tasks')}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['#EF4444', '#B91C1C']}
+                style={styles.quickAccessGradient}
+              >
+                <MaterialIcons name="assignment" size={24} color="#FFFFFF" />
+                <Text style={styles.quickAccessText}>Tasks</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
 
         {/* Statistics Cards */}
-        <View style={styles.statsContainer}>
+        <Animated.View style={[styles.statsContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
-              <LinearGradient colors={['#667eea', '#764ba2']} style={styles.statGradient}>
+              <LinearGradient colors={['#3B82F6', '#1E40AF']} style={styles.statGradient}>
                 <Feather name="trending-up" size={24} color="#FFFFFF" />
                 <Text style={styles.statNumber}>92%</Text>
                 <Text style={styles.statLabel}>Overall Score</Text>
               </LinearGradient>
             </View>
-            
             <View style={styles.statCard}>
-              <LinearGradient colors={['#f093fb', '#f5576c']} style={styles.statGradient}>
+              <LinearGradient colors={['#EF4444', '#B91C1C']} style={styles.statGradient}>
                 <Feather name="award" size={24} color="#FFFFFF" />
                 <Text style={styles.statNumber}>15</Text>
                 <Text style={styles.statLabel}>Achievements</Text>
               </LinearGradient>
             </View>
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
-
-
     </>
   );
 };
@@ -334,7 +334,6 @@ const TasksScreen = () => {
       );
 
       if (response.status === 200) {
-        // Update local state
         setTasks(prevTasks =>
           prevTasks.map(task =>
             task.id === taskId ? { ...task, status: 'submitted', submission_text: submissionText } : task
@@ -344,7 +343,6 @@ const TasksScreen = () => {
         setSubmissionModalVisible(false);
         setSubmissionText('');
         setModalVisible(false);
-        // Refresh the task list
         fetchTasks();
       }
     } catch (error) {
@@ -401,7 +399,6 @@ const TasksScreen = () => {
         timeout: 10000,
       });
       
-      // Ensure response.data is an array and filter out invalid items
       const tasksData = Array.isArray(response.data) ? response.data : [];
       const validTasks = tasksData.filter(task => task && typeof task === 'object');
       setTasks(validTasks);
@@ -452,7 +449,7 @@ const TasksScreen = () => {
         >
           <View style={styles.taskHeader}>
             <View style={styles.taskIconContainer}>
-              <MaterialIcons name="assignment" size={24} color="#667eea" />
+              <MaterialIcons name="assignment" size={24} color="#3B82F6" />
             </View>
             <View style={styles.taskStatusBadge}>
               <LinearGradient
@@ -490,7 +487,7 @@ const TasksScreen = () => {
   return (
     <View style={styles.tasksContainer}>
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={['#3B82F6', '#1E40AF']}
         style={styles.tasksHeader}
       >
         <Text style={styles.tasksHeaderTitle}>My Tasks</Text>
@@ -499,7 +496,7 @@ const TasksScreen = () => {
       
       {isLoading ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#667eea" />
+          <ActivityIndicator size="large" color="#3B82F6" />
           <Text style={styles.loaderText}>Loading tasks...</Text>
         </View>
       ) : (
@@ -586,7 +583,6 @@ const TasksScreen = () => {
         </View>
       </Modal>
 
-      {/* Task Submission Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -664,7 +660,6 @@ const TicketsScreen = () => {
         timeout: 10000,
       });
       
-      // Ensure response.data is an array and filter out invalid items
       const ticketsData = Array.isArray(response.data) ? response.data : [];
       const validTickets = ticketsData.filter(ticket => ticket && typeof ticket === 'object');
       setTickets(validTickets);
@@ -702,7 +697,7 @@ const TicketsScreen = () => {
     <View style={styles.container}>
       {isLoading ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color="#3B82F6" />
         </View>
       ) : (
         <FlatList
@@ -806,7 +801,6 @@ const AttendanceScreen = () => {
         timeout: 10000,
       });
       
-      // Ensure response.data is an array and filter out invalid items
       const attendanceData = Array.isArray(response.data) ? response.data : [];
       const validRecords = attendanceData.filter(record => record && typeof record === 'object');
       setAttendanceRecords(validRecords);
@@ -857,7 +851,7 @@ const AttendanceScreen = () => {
     <View style={styles.attendanceContainer}>
       {isLoading ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color="#3B82F6" />
           <Text style={styles.loaderText}>Loading Attendance...</Text>
         </View>
       ) : (
@@ -921,7 +915,7 @@ const AttendanceScreen = () => {
               style={styles.list}
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
-                  <Text style={styles.attendanceEmptyText}>ðŸ—“ï¸� No attendance records available</Text>
+                  <Text style={styles.attendanceEmptyText}>📅 No attendance records available</Text>
                   <Text style={styles.emptySubText}>Your attendance will appear here once marked by faculty</Text>
                 </View>
               }
@@ -1165,7 +1159,7 @@ const ProfileScreen = () => {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#3B82F6" />
       </View>
     );
   }
@@ -1174,7 +1168,6 @@ const ProfileScreen = () => {
     <View style={styles.container}>
       <ScrollView>
         <View style={styles.profileCard}>
-          {/* Profile Image Section */}
           <View style={styles.profileImageContainer}>
             <TouchableOpacity onPress={pickImage}>
               <Image
@@ -1183,7 +1176,7 @@ const ProfileScreen = () => {
                 resizeMode="cover"
               />
               <View style={styles.editIconContainer}>
-                <MaterialIcons name="edit" size={20} color="#ffffff" />
+                <MaterialIcons name="edit" size= {20} color="#ffffff" />
               </View>
             </TouchableOpacity>
           </View>
@@ -1255,27 +1248,25 @@ const StudentDashboard = () => {
           }
           return <MaterialIcons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#667eea',
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarActiveTintColor: '#3B82F6',
+        tabBarInactiveTintColor: '#6B7280',
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
-          paddingBottom: Platform.OS === 'ios' ? 25 : 12,
-          paddingTop: 12,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 10,
+          paddingTop: 10,
           borderTopWidth: 0,
-          elevation: 25,
-          shadowColor: '#667eea',
-          shadowOffset: { width: 0, height: -8 },
-          shadowOpacity: 0.2,
-          shadowRadius: 20,
-          height: Platform.OS === 'ios' ? 90 : 75,
-          borderTopLeftRadius: 25,
-          borderTopRightRadius: 25,
-          position: 'absolute',
+          elevation: 10,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          height: Platform.OS === 'ios' ? 80 : 70,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
-          fontFamily: 'System',
           marginBottom: 5,
         },
       })}
@@ -1298,19 +1289,18 @@ const StudentDashboard = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    backgroundColor: '#F8FAFC',
-    padding: 12,
-    alignItems: 'center',
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    padding: 16,
   },
   homeContainer: {
     flexGrow: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F3F4F6',
     paddingBottom: 20,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F3F4F6',
   },
   loadingGradient: {
     flex: 1,
@@ -1319,807 +1309,253 @@ const styles = StyleSheet.create({
   },
   loadingContent: {
     alignItems: 'center',
-    padding: 40,
-  },
-  loadingIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
+    padding: 20,
   },
   loadingText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '600',
-    marginBottom: 20,
-  },
-  loadingDots: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FFFFFF',
-  },
-  dot1: {
-    opacity: 0.4,
-  },
-  dot2: {
-    opacity: 0.7,
-  },
-  dot3: {
-    opacity: 1,
+    marginTop: 12,
   },
   headerGradient: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 35,
-    borderBottomRightRadius: 35,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerContent: {
     alignItems: 'center',
-  },
-  headerTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    width: '100%',
-    marginBottom: 20,
-  },
-
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
+    padding: 16,
   },
   greetingText: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 18,
+    color: '#FFFFFF',
     fontWeight: '500',
-    marginBottom: 4,
   },
   studentName: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginVertical: 8,
   },
   universityText: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  notificationButton: {
-    position: 'relative',
-    padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: '#ff6b6b',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  notificationBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  weatherCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 15,
-    padding: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  weatherInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  weatherText: {
-    color: '#FFFFFF',
     fontSize: 14,
+    color: '#E5E7EB',
+    fontWeight: '400',
+  },
+  dateTimeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginTop: 12,
+  },
+  dateTimeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dateTimeText: {
+    color: '#E5E7EB',
+    fontSize: 13,
     fontWeight: '500',
   },
   infoCard: {
-    marginHorizontal: 20,
-    marginTop: -25,
-    marginBottom: 5,
-    borderRadius: 25,
+    marginHorizontal: 16,
+    marginTop: -20,
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  infoCardGradient: {
-    borderRadius: 25,
-    padding: 25,
+  infoCardContent: {
+    padding: 16,
   },
   infoHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-    justifyContent: 'space-between',
-  },
-  infoIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 16,
   },
   infoTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1E293B',
-    flex: 1,
-    marginLeft: 12,
-  },
-
-  infoContent: {
-    gap: 16,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(248, 250, 252, 0.8)',
-    borderRadius: 15,
-    padding: 18,
-    borderLeftWidth: 4,
-    borderLeftColor: '#667eea',
-  },
-  infoIconWrapper: {
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginLeft: 8,
   },
   infoItem: {
-    flex: 1,
-    gap: 4,
+    marginBottom: 12,
   },
   infoLabel: {
-    fontSize: 13,
-    color: '#64748B',
+    fontSize: 12,
+    color: '#6B7280',
     fontWeight: '500',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   infoValue: {
     fontSize: 16,
-    color: '#1E293B',
+    color: '#1F2937',
     fontWeight: '600',
   },
-  attendanceContainer: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    padding: 16,
-  },
-  list: {
-    flex: 1,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 16,
-    marginVertical: 8,
-    marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  attendanceCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 16,
-    marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  attendanceCardHeader: {
-    borderBottomWidth: 0,
-    paddingBottom: 0,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 12,
-  },
-  attendanceTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1E293B',
-  },
-  detailText: {
-    fontSize: 15,
-    color: '#64748B',
-    marginBottom: 8,
-    lineHeight: 22,
-  },
-  attendanceDetailText: {
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: 6,
-    lineHeight: 20,
-  },
-  modalContainer: {
-    flex: 1,
-    
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  attendanceModal: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalView: {
-    width: '90%',
-    maxWidth: 420,
-    maxHeight: '80%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  attendanceModalView: {
-    width: '90%',
-    maxWidth: 400,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1E293B',
+  resumeButtonContainer: {
+    marginHorizontal: 16,
     marginBottom: 16,
-    textAlign: 'center',
-  },
-  modalTitleAttendance: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  modalText: {
-    fontSize: 16,
-    color: '#64748B',
-    marginBottom: 12,
-    lineHeight: 24,
-  },
-  modalTextAttendance: {
-    fontSize: 16,
-    color: '#64748B',
-    marginBottom: 12,
-    lineHeight: 24,
-  },
-  modalDivider: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    marginVertical: 10,
-  },
-  closeButton: {
-    backgroundColor: '#4F46E5',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 16,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  closeButtonAttendance: {
-    backgroundColor: '#4F46E5',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 16,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  profileCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    marginVertical: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-    width: '100%',
-  },
-  profileText: {
-    fontSize: 16,
-    marginBottom: 12,
-    color: '#1E293B',
-    lineHeight: 24,
-  },
-  raiseButton: {
-    backgroundColor: '#10B981',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 16,
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  updateButton: {
-    backgroundColor: '#4F46E5',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 12,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  statusCard: {
-    backgroundColor: '#fef9c3',
-    padding: 12,
-    borderRadius: 12,
-    marginTop: 16,
-  },
-  pendingText: {
-    color: '#b45309',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  approvedCard: {
-    backgroundColor: '#dcfce7',
-    padding: 12,
-    borderRadius: 12,
-    marginTop: 16,
-  },
-  approvedText: {
-    color: '#15803d',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  emptyText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#64748B',
-    marginTop: 16,
-    fontWeight: '500',
-  },
-  attendanceEmptyText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#6b7280',
-    marginTop: 16,
-    fontWeight: '500',
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-  },
-  loaderText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#4F46E5',
-    fontWeight: '500',
-  },
-  logoutButton: {
-    backgroundColor: '#EF4444',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginVertical: 16,
-    shadowColor: '#EF4444',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  // Legacy styles - keeping for backward compatibility but updated
-  tableContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    marginVertical: 16,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  tableTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1E293B',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    paddingVertical: 12,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-  },
-  tableLabel: {
-    fontWeight: '600',
-    color: '#64748B',
-    fontSize: 16,
-  },
-  tableValue: {
-    color: '#1E293B',
-    fontSize: 16,
-    fontWeight: '600',
   },
   resumeButton: {
-    marginHorizontal: 20,
-    marginTop: 25,
-    marginBottom: 5,
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#667eea',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 12,
   },
   resumeButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 22,
-    paddingHorizontal: 25,
-    minHeight: 80,
-  },
-  resumeIconContainer: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 5,
-  },
-  resumeTextContainer: {
-    flex: 1,
-    marginLeft: 18,
-    justifyContent: 'center',
+    padding: 16,
+    gap: 12,
   },
   resumeButtonText: {
     color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 19,
-    marginBottom: 4,
-    letterSpacing: 0.5,
+    fontSize: 16,
+    fontWeight: '600',
   },
-  resumeButtonSubtext: {
-    color: 'rgba(255, 255, 255, 0.85)',
+  quickAccessContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  quickAccessTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  quickAccessGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  quickAccessCard: {
+    width: '48%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  quickAccessGradient: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickAccessText: {
+    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
+    fontWeight: '600',
+    marginTop: 8,
   },
-
   statsContainer: {
-    marginHorizontal: 20,
-    marginTop: 15,
-    marginBottom: 35,
+    marginHorizontal: 16,
+    marginBottom: 20,
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 16,
-    justifyContent: 'space-between',
+    gap: 12,
   },
   statCard: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
   statGradient: {
-    padding: 22,
+    padding: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 130,
   },
   statNumber: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '700',
     color: '#FFFFFF',
     marginVertical: 8,
   },
   statLabel: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 30,
-    paddingHorizontal: 16,
-  },
-  emptySubText: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 6,
-  },
-  attendanceSummaryCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  summaryTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1E293B',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 16,
-  },
-  summaryItem: {
-    alignItems: 'center',
-  },
-  summaryNumber: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#4F46E5',
-  },
-  summaryLabel: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 6,
+    fontSize: 12,
+    color: '#E5E7EB',
     fontWeight: '500',
   },
-  percentageContainer: {
-    alignItems: 'center',
-  },
-  percentageText: {
-    fontSize: 32,
-    fontWeight: '800',
-    marginBottom: 12,
-    color: '#1E293B',
-  },
-  progressBar: {
-    width: '100%',
-    height: 10,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  profileImageContainer: {
-    width: 120,
-    height: 170,
-    borderRadius: 60,
-    overflow: 'hidden',
-    alignSelf: 'center',
-    marginTop: 20,
-    borderWidth: 4,
-    borderColor: '#ffffff',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  editIconContainer: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: '#2563eb',
-    borderRadius: 12,
-    padding: 6,
-  },
-  toggleContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: 20,
-    padding: 6,
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-  },
-  toggleButtonActive: {
-    backgroundColor: '#4F46E5',
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  toggleButtonText: {
-    fontSize: 15,
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  toggleButtonTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  textArea: {
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#1E293B',
-    backgroundColor: '#F8FAFC',
-    marginVertical: 12,
-    minHeight: 120,
-    textAlignVertical: 'top',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-    gap: 12,
-  },
-  // Enhanced Task Styles
   tasksContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F3F4F6',
   },
   tasksHeader: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   tasksHeaderTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 5,
   },
   tasksHeaderSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    color: '#E5E7EB',
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '400',
   },
   tasksList: {
     flex: 1,
-    marginTop: -15,
+    marginTop: -10,
   },
   tasksListContent: {
-    padding: 20,
-    paddingBottom: 100,
+    padding: 16,
+    paddingBottom: 80,
   },
   taskCard: {
-    marginBottom: 16,
-    borderRadius: 20,
+    marginBottom: 12,
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowRadius: 4,
+    elevation: 4,
   },
   taskCardGradient: {
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    padding: 16,
   },
   taskHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   taskIconContainer: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
   },
   taskStatusBadge: {
-    borderRadius: 15,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   statusBadgeGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     gap: 6,
   },
   statusBadgeText: {
@@ -2129,11 +1565,10 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   taskTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 12,
-    lineHeight: 24,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
   },
   taskDetails: {
     gap: 8,
@@ -2141,42 +1576,386 @@ const styles = StyleSheet.create({
   taskDetailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   taskDetailText: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#6B7280',
     fontWeight: '500',
   },
   emptyTasksContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
+    paddingVertical: 40,
   },
   emptyTasksIcon: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   emptyTasksText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#64748B',
+    color: '#6B7280',
     marginBottom: 8,
-    textAlign: 'center',
   },
   emptyTasksSubtext: {
-    fontSize: 16,
-    color: '#94A3B8',
+    fontSize: 14,
+    color: '#9CA3AF',
     textAlign: 'center',
-    lineHeight: 22,
   },
-
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    width: '90%',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  modalText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 16,
+  },
+  closeButton: {
+    backgroundColor: '#3B82F6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  textArea: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: '#1F2937',
+    backgroundColor: '#F9FAFB',
+    marginVertical: 8,
+  },
+  attendanceContainer: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    padding: 16,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginBottom: 16,
+    padding: 4,
+    justifyContent: 'space-between',
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  toggleButtonActive: {
+    backgroundColor: '#3B82F6',
+  },
+  toggleButtonText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  toggleButtonTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  attendanceSummaryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 12,
+  },
+  summaryItem: {
+    alignItems: 'center',
+  },
+  summaryNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#3B82F6',
+  },
+  summaryLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  percentageContainer: {
+    alignItems: 'center',
+  },
+  percentageText: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  progressBar: {
+    width: '100%',
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  attendanceCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 16,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  attendanceCardHeader: {
+    marginBottom: 8,
+  },
+  attendanceTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  attendanceCardBody: {
+    gap: 6,
+  },
+  attendanceDetailText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  attendanceModal: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  attendanceModalView: {
+    width: '90%',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  modalTitleAttendance: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  modalTextAttendance: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  modalDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    marginVertical: 8,
+  },
+  closeButtonAttendance: {
+    backgroundColor: '#3B82F6',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  profileCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  profileImageContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  editIconContainer: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    padding: 4,
+  },
+  profileText: {
+    fontSize: 14,
+    marginBottom: 8,
+    color: '#1F2937',
+  },
+  raiseButton: {
+    backgroundColor: '#10B981',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  updateButton: {
+    backgroundColor: '#3B82F6',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  statusCard: {
+    backgroundColor: '#FEF3C7',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  pendingText: {
+    color: '#B45309',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  approvedCard: {
+    backgroundColor: '#DCFCE7',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  approvedText: {
+    color: '#15803D',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  logoutButton: {
+    backgroundColor: '#EF4444',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  list: {
+    flex: 1,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 16,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#6B7280',
+    marginTop: 16,
+  },
+  attendanceEmptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#6B7280',
+    marginTop: 16,
+  },
+  emptySubText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loaderText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#3B82F6',
+    fontWeight: '500',
+  },
 });
 
 export default StudentDashboard;

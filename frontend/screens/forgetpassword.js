@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { IP } from '../ip';
 import * as Animatable from 'react-native-animatable';
+import NetworkErrorContainer from '../components/NetworkErrorContainer';
 
 const ForgetPassword = ({ navigation }) => {
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
@@ -30,6 +31,67 @@ const ForgetPassword = ({ navigation }) => {
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalTitle, setModalTitle] = useState('');
+  const [networkErrorVisible, setNetworkErrorVisible] = useState(false);
+  const [networkErrorInfo, setNetworkErrorInfo] = useState({
+    title: '',
+    message: '',
+    showRetryButton: true
+  });
+
+  // Enhanced error handler for all network/API errors
+  const handleApiError = (error, defaultMessage = 'Network Error') => {
+    console.error('API Error:', error);
+    
+    // Handle different types of errors
+    if (!error.response) {
+      // Network error - no response from server (connection failed, timeout, etc.)
+      return {
+        title: 'No Internet Connection',
+        message: 'Unable to connect to the server. Please check your internet connection and try again.',
+        isNetworkError: true
+      };
+    }
+    
+    // Server responded with error status
+    const status = error.response.status;
+    
+    if (status === 500) {
+      return {
+        title: 'Server Connection Error',
+        message: 'Unable to connect to the server. Please check your internet connection and try again.',
+        isNetworkError: true
+      };
+    } else if (status >= 400 && status < 500) {
+      return {
+        title: 'Connection Problem',
+        message: 'Unable to connect to the server. Please check your internet connection and try again.',
+        isNetworkError: true
+      };
+    } else {
+      return {
+        title: 'Connection Problem',
+        message: 'Service temporarily unavailable. Please check your internet connection and try again.',
+        isNetworkError: true
+      };
+    }
+  };
+
+  // Show network error in custom container
+  const showNetworkError = (title, message, showRetryButton = true) => {
+    setNetworkErrorInfo({
+      title,
+      message,
+      showRetryButton
+    });
+    setNetworkErrorVisible(true);
+  };
+
+  // Show regular error in modal
+  const showRegularError = (title, message) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setErrorModalVisible(true);
+  };
 
   // Enhanced Error Dialog Component
   const ErrorDialog = ({ visible, title, message, onClose, isSuccess = false }) => (
@@ -65,11 +127,7 @@ const ForgetPassword = ({ navigation }) => {
     </Modal>
   );
 
-  const showError = (title, message) => {
-    setModalTitle(title);
-    setModalMessage(message);
-    setErrorModalVisible(true);
-  };
+
 
   const showSuccess = (title, message) => {
     setModalTitle(title);
@@ -90,12 +148,12 @@ const ForgetPassword = ({ navigation }) => {
 
   const handleSendOTP = async () => {
     if (!email.trim()) {
-      showError('Email Required', 'Please enter your email address.');
+      showRegularError('Email Required', 'Please enter your email address.');
       return;
     }
 
     if (!validateEmail(email)) {
-      showError('Invalid Email', 'Please enter a valid email address.');
+      showRegularError('Invalid Email', 'Please enter a valid email address.');
       return;
     }
 
@@ -108,17 +166,31 @@ const ForgetPassword = ({ navigation }) => {
       if (response.data.success) {
         showSuccess('OTP Sent!', 'A 6-digit OTP has been sent to your email address. Please check your inbox and enter the OTP below.');
         setStep(2);
+      } else if (response.data.error === 'email_not_found') {
+        // Handle email not found case - show regular dialog, not network error
+        showRegularError('Email Not Found', 'No account found with this email address. Please check your email or create a new account.');
       }
     } catch (error) {
       console.error('Send OTP Error:', error);
-      if (error.response?.status === 404) {
-        showError('Email Not Found', 'No account found with this email address. Please check your email or create a new account.');
-      } else if (error.response?.status === 429) {
-        showError('Too Many Requests', 'Please wait before requesting another OTP.');
-      } else if (error.code === 'NETWORK_ERROR') {
-        showError('Network Error', 'Unable to connect to the server. Please check your internet connection and try again.');
+      
+      // Use the enhanced error handler
+      let errorInfo;
+      
+      if (error.response?.status === 429) {
+        errorInfo = {
+          title: 'Too Many Requests',
+          message: 'Please wait before requesting another OTP.',
+          isNetworkError: false
+        };
       } else {
-        showError('Error', error.response?.data?.message || 'Failed to send OTP. Please try again.');
+        errorInfo = handleApiError(error);
+      }
+      
+      // Show appropriate error type
+      if (errorInfo.isNetworkError) {
+        showNetworkError(errorInfo.title, errorInfo.message, true);
+      } else {
+        showRegularError(errorInfo.title, errorInfo.message);
       }
     } finally {
       setLoading(false);
@@ -126,13 +198,14 @@ const ForgetPassword = ({ navigation }) => {
   };
 
   const handleVerifyOTP = async () => {
+    // Validation checks - show regular error dialog
     if (!otp.trim()) {
-      showError('OTP Required', 'Please enter the 6-digit OTP sent to your email.');
+      showRegularError('Incorrect OTP', 'Please reenter correct OTP.');
       return;
     }
 
     if (otp.length !== 6) {
-      showError('Invalid OTP', 'OTP must be exactly 6 digits.');
+      showRegularError('Incorrect OTP', 'Please reenter correct OTP.');
       return;
     }
 
@@ -146,18 +219,24 @@ const ForgetPassword = ({ navigation }) => {
       if (response.data.success) {
         showSuccess('OTP Verified!', 'OTP verified successfully. Now please create a new strong password.');
         setStep(3);
+      } else if (response.data.error === 'invalid_otp') {
+        // Handle invalid OTP from server response
+        showRegularError('Incorrect OTP', 'Please reenter correct OTP.');
+      } else if (response.data.error === 'otp_expired') {
+        // Handle expired OTP
+        showRegularError('Incorrect OTP', 'Please reenter correct OTP.');
+      } else if (response.data.error === 'otp_not_found') {
+        // Handle OTP not found
+        showRegularError('Incorrect OTP', 'Please reenter correct OTP.');
+      } else if (response.data.error === 'too_many_attempts') {
+        // Handle too many attempts
+        showRegularError('Too Many Attempts', 'Too many failed attempts. Please request a new OTP.');
       }
     } catch (error) {
       console.error('Verify OTP Error:', error);
-      if (error.response?.status === 400) {
-        showError('Invalid OTP', 'The OTP you entered is incorrect or has expired. Please try again.');
-      } else if (error.response?.status === 429) {
-        showError('Too Many Attempts', 'Too many failed attempts. Please request a new OTP.');
-      } else if (error.code === 'NETWORK_ERROR') {
-        showError('Network Error', 'Unable to connect to the server. Please check your internet connection and try again.');
-      } else {
-        showError('Error', error.response?.data?.message || 'Failed to verify OTP. Please try again.');
-      }
+      
+      // For any error (network, API, etc.), show the same simple message
+      showRegularError('Incorrect OTP', 'Please reenter correct OTP.');
     } finally {
       setLoading(false);
     }
@@ -165,17 +244,17 @@ const ForgetPassword = ({ navigation }) => {
 
   const handleResetPassword = async () => {
     if (!newPassword.trim()) {
-      showError('Password Required', 'Please enter a new password.');
+      showRegularError('Password Required', 'Please enter a new password.');
       return;
     }
 
     if (!validatePassword(newPassword)) {
-      showError('Weak Password', 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.');
+      showRegularError('Weak Password', 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      showError('Password Mismatch', 'Password and confirm password do not match. Please try again.');
+      showRegularError('Password Mismatch', 'Password and confirm password do not match. Please try again.');
       return;
     }
 
@@ -197,12 +276,25 @@ const ForgetPassword = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Reset Password Error:', error);
+      
+      // Use the enhanced error handler
+      let errorInfo;
+      
       if (error.response?.status === 400) {
-        showError('Reset Failed', 'Invalid or expired OTP. Please start the process again.');
-      } else if (error.code === 'NETWORK_ERROR') {
-        showError('Network Error', 'Unable to connect to the server. Please check your internet connection and try again.');
+        errorInfo = {
+          title: 'Reset Failed',
+          message: 'Invalid or expired OTP. Please start the process again.',
+          isNetworkError: false
+        };
       } else {
-        showError('Error', error.response?.data?.message || 'Failed to reset password. Please try again.');
+        errorInfo = handleApiError(error);
+      }
+      
+      // Show appropriate error type
+      if (errorInfo.isNetworkError) {
+        showNetworkError(errorInfo.title, errorInfo.message, true);
+      } else {
+        showRegularError(errorInfo.title, errorInfo.message);
       }
     } finally {
       setLoading(false);
@@ -429,6 +521,25 @@ const ForgetPassword = ({ navigation }) => {
         message={modalMessage}
         onClose={() => setSuccessModalVisible(false)}
         isSuccess={true}
+      />
+
+      <NetworkErrorContainer
+        visible={networkErrorVisible}
+        title={networkErrorInfo.title}
+        message={networkErrorInfo.message}
+        showRetryButton={networkErrorInfo.showRetryButton}
+        onRetry={() => {
+          setNetworkErrorVisible(false);
+          // Retry the last attempted action based on current step
+          if (step === 1) {
+            sendOTP();
+          } else if (step === 2) {
+            verifyOTP();
+          } else if (step === 3) {
+            resetPassword();
+          }
+        }}
+        onClose={() => setNetworkErrorVisible(false)}
       />
     </KeyboardAvoidingView>
   );

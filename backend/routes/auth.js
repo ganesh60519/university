@@ -7,6 +7,15 @@ const pool = require('../db');
 
 const router = express.Router();
 
+// Health check endpoint
+router.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'University server is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Store OTPs temporarily (in production, use Redis or database)
 const otpStore = new Map();
 
@@ -14,16 +23,48 @@ const otpStore = new Map();
 const createTransporter = () => {
   // Check if email is configured
   if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'your-email@gmail.com') {
+    console.log('⚠️  Email not configured - Running in demo mode');
     return null; // Return null if not configured for demo mode
   }
   
-  return nodemailer.createTransporter({
-    service: 'gmail',
+  // Determine email service
+  const emailService = process.env.EMAIL_SERVICE || 'gmail';
+  
+  const config = {
+    service: emailService,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
     }
-  });
+  };
+  
+  // For custom SMTP or other configurations
+  if (emailService === 'custom') {
+    config.host = process.env.EMAIL_HOST;
+    config.port = process.env.EMAIL_PORT || 587;
+    config.secure = process.env.EMAIL_SECURE === 'true';
+    delete config.service;
+  }
+  
+  try {
+    const transporter = nodemailer.createTransport(config);
+    console.log(`✅ Email transporter configured for ${emailService}`);
+    
+    // Test the connection (but don't block app startup)
+    transporter.verify((error, success) => {
+      if (error) {
+        console.error('⚠️  Email transporter verification failed:', error.message);
+        console.log('💡 Email will work in demo mode. Check EMAIL_SETUP_GUIDE.md for configuration help.');
+      } else {
+        console.log('✅ Email transporter verified successfully - ready to send emails!');
+      }
+    });
+    
+    return transporter;
+  } catch (error) {
+    console.error('❌ Failed to create email transporter:', error);
+    return null;
+  }
 };
 
 // Generate 6-digit OTP
@@ -38,11 +79,12 @@ const sendOTPEmail = async (email, otp, name = 'User') => {
   // If no transporter (demo mode), just log the OTP
   if (!transporter) {
     console.log(`📧 DEMO MODE - OTP for ${email}: ${otp}`);
+    console.log('⚠️  To enable email sending, configure EMAIL_USER and EMAIL_PASS in .env file');
     return Promise.resolve(); // Simulate successful email sending
   }
   
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: `"University App" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Password Reset OTP - University App',
     html: `
@@ -79,7 +121,14 @@ const sendOTPEmail = async (email, otp, name = 'User') => {
     `
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    const result = await transporter.sendMail(mailOptions);
+    console.log(`✅ OTP email sent successfully to ${email}`);
+    return result;
+  } catch (error) {
+    console.error('❌ Failed to send OTP email:', error);
+    throw new Error('Failed to send OTP email. Please check your email configuration.');
+  }
 };
 
 // Login endpoint (existing functionality)
@@ -180,7 +229,11 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     if (!user) {
-      return res.status(404).json({ error: 'No account found with this email address' });
+      return res.json({ 
+        success: false, 
+        error: 'email_not_found',
+        message: 'No account found with this email address' 
+      });
     }
 
     // Generate OTP
@@ -196,14 +249,36 @@ router.post('/forgot-password', async (req, res) => {
     });
 
     // Send OTP email
-    await sendOTPEmail(normalizedEmail, otp, user.name);
-    
-    console.log(`� OTP generated for ${normalizedEmail}: ${otp}`); // For development
+    try {
+      await sendOTPEmail(normalizedEmail, otp, user.name);
+      
+      console.log(`🔢 OTP generated for ${normalizedEmail}: ${otp}`); // For development
 
-    res.json({
-      success: true,
-      message: 'OTP sent to your email address (check server console in demo mode)'
-    });
+      res.json({
+        success: true,
+        message: 'OTP sent to your email address successfully'
+      });
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      
+      // Don't delete the OTP from store in case of email failure
+      // User might still be able to use it if they saw it in logs
+      
+      // Provide user-friendly error message
+      let userMessage = 'Unable to send OTP email. Please check your internet connection and try again.';
+      
+      if (emailError.code === 'EAUTH') {
+        userMessage = 'Email service temporarily unavailable. Please try again in a few minutes.';
+      } else if (emailError.code === 'ECONNECTION' || emailError.code === 'ETIMEDOUT') {
+        userMessage = 'Network connection error. Please check your internet connection and try again.';
+      }
+      
+      res.status(500).json({
+        success: false,
+        error: userMessage,
+        message: userMessage
+      });
+    }
 
   } catch (error) {
     console.error('Forgot password error:', error);
@@ -224,26 +299,42 @@ router.post('/verify-otp', async (req, res) => {
     const otpData = otpStore.get(normalizedEmail);
 
     if (!otpData) {
-      return res.status(400).json({ error: 'OTP not found or expired. Please request a new one.' });
+      return res.json({ 
+        success: false, 
+        error: 'otp_not_found',
+        message: 'Please reenter correct OTP.' 
+      });
     }
 
     // Check if OTP is expired
     if (Date.now() > otpData.expiresAt) {
       otpStore.delete(normalizedEmail);
-      return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
+      return res.json({ 
+        success: false, 
+        error: 'otp_expired',
+        message: 'Please reenter correct OTP.' 
+      });
     }
 
     // Check attempts
     if (otpData.attempts >= 3) {
       otpStore.delete(normalizedEmail);
-      return res.status(429).json({ error: 'Too many failed attempts. Please request a new OTP.' });
+      return res.json({ 
+        success: false, 
+        error: 'too_many_attempts',
+        message: 'Too many failed attempts. Please request a new OTP.' 
+      });
     }
 
     // Verify OTP
     if (otpData.otp !== otp.trim()) {
       otpData.attempts += 1;
       otpStore.set(normalizedEmail, otpData);
-      return res.status(400).json({ error: 'Invalid OTP. Please try again.' });
+      return res.json({ 
+        success: false, 
+        error: 'invalid_otp',
+        message: 'Please reenter correct OTP.' 
+      });
     }
 
     // Mark as verified

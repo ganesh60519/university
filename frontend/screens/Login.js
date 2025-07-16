@@ -12,6 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { IP } from '../ip';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,12 +22,56 @@ const Login = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [loginError, setLoginError] = useState(null); // For login error container
+
+  // Helper function to show error container
+  const showErrorContainer = (title, message) => {
+    setLoginError({ title, message });
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => setLoginError(null), 5000);
+  };
+
+  // Enhanced error handler for all network/API errors
+  const handleApiError = (error) => {
+    // Handle different types of errors
+    if (!error.response) {
+      // Network error - no response from server
+      return {
+        title: 'Network Error',
+        message: 'Unable to connect to the server. Please check your internet connection and try again.'
+      };
+    }
+    
+    const status = error.response.status;
+    
+    if (status === 404) {
+      return {
+        title: 'Network Error',
+        message: 'Service temporarily unavailable. Please check your internet connection and try again.'
+      };
+    } else if (status === 500) {
+      return {
+        title: 'Network Error',
+        message: 'Server error. Please check your internet connection and try again.'
+      };
+    } else if (status >= 400 && status < 500) {
+      return {
+        title: 'Network Error',
+        message: 'Please check your internet connection and try again.'
+      };
+    } else {
+      return {
+        title: 'Network Error',
+        message: 'Service temporarily unavailable. Please check your internet connection and try again.'
+      };
+    }
+  };
 
   const handleLogin = async () => {
     try {
       setLoading(true);
       if (!email || !password) {
-        Alert.alert('Error', 'Please fill in all fields');
+        showErrorContainer('Error', 'Please fill in all fields');
         setLoading(false);
         return;
       }
@@ -49,11 +94,36 @@ const Login = ({ navigation }) => {
             : 'AdminDashboard'
         );
       } else {
-        Alert.alert('Error', 'Invalid email or password');
+        showErrorContainer('Error', 'Invalid email or password');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Error', 'Login failed. Please try again.');
+      // Use the enhanced error handler
+      let errorInfo;
+      
+      if (error.response?.status === 401) {
+        // Show dialog box for invalid credentials
+        Alert.alert(
+          'Invalid Credentials',
+          'Invalid email or password. Please try again.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {},
+              style: 'cancel',
+            },
+          ],
+          { cancelable: true }
+        );
+      } else if (error.response?.status === 400) {
+        errorInfo = {
+          title: 'Login Failed',
+          message: 'Please check your email and password.'
+        };
+        showErrorContainer(errorInfo.title, errorInfo.message);
+      } else {
+        errorInfo = handleApiError(error);
+        showErrorContainer(errorInfo.title, errorInfo.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -70,6 +140,23 @@ const Login = ({ navigation }) => {
           <View style={styles.card}>
             <Text style={styles.title}>Welcome</Text>
             <Text style={styles.subtitle}>Sign in to continue</Text>
+
+            {/* Login Error Container */}
+            {loginError && (
+              <View style={styles.errorContainer}>
+                <MaterialIcons name="error-outline" size={20} color="#ef4444" />
+                <View style={styles.errorTextContainer}>
+                  <Text style={styles.errorTitle}>{loginError.title}</Text>
+                  <Text style={styles.errorMessage}>{loginError.message}</Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.dismissButton}
+                  onPress={() => setLoginError(null)}
+                >
+                  <MaterialIcons name="close" size={18} color="#666" />
+                </TouchableOpacity>
+              </View>
+            )}
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>User Name</Text>
@@ -147,7 +234,7 @@ const Login = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: '#1A1A2E', // Dark background to match the image
   },
   scrollContainer: {
     flexGrow: 1,
@@ -155,7 +242,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   card: {
-    backgroundColor: 'wheat',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Semi-transparent card
     borderRadius: 20,
     padding: 28,
     marginHorizontal: 20,
@@ -172,12 +259,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 8,
-    color: '#1e293b',
+    color: '#E0E0E0', // Light text color
     letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#64748b',
+    color: '#A0A0A0', // Light gray subtitle
     textAlign: 'center',
     marginBottom: 28,
     fontWeight: '400',
@@ -187,20 +274,20 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#1e293b',
+    color: '#E0E0E0', // Light text color
     marginBottom: 8,
     fontWeight: '600',
     letterSpacing: 0.3,
   },
   input: {
-    backgroundColor: 'rgba(241, 245, 249, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Semi-transparent input
     paddingVertical: 14,
     paddingHorizontal: 18,
     borderRadius: 12,
     fontSize: 16,
-    color: '#1e293b',
+    color: '#E0E0E0', // Light text color
     borderWidth: 1,
-    borderColor: 'rgba(203, 213, 225, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -209,10 +296,10 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(241, 245, 249, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Semi-transparent input
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(203, 213, 225, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -223,10 +310,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 18,
     fontSize: 16,
-    color: '#1e293b',
+    color: '#E0E0E0', // Light text color
   },
   toggleText: {
-    color: '#1e40af',
+    color: '#A0A0A0', // Light gray toggle text
     fontWeight: '600',
     fontSize: 14,
     paddingHorizontal: 18,
@@ -237,21 +324,21 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   linkText: {
-    color: '#1e40af',
+    color: '#A0A0A0', // Light gray link text
     fontWeight: '600',
     fontSize: 14,
   },
   button: {
-    backgroundColor: '#1e40af',
+    backgroundColor: '#6B46C1', // Purple button color from image
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowColor: '#6B46C1',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10,
   },
   buttonDisabled: {
     backgroundColor: '#60a5fa',
@@ -267,9 +354,47 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   registerText: {
-    color: '#64748b',
+    color: '#A0A0A0', // Light gray register text
     fontSize: 14,
     fontWeight: '400',
+  },
+  // Error Container Styles
+  errorContainer: {
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  errorTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  errorTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#dc2626',
+    marginBottom: 2,
+  },
+  errorMessage: {
+    fontSize: 13,
+    color: '#991b1b',
+    lineHeight: 18,
+  },
+  dismissButton: {
+    padding: 4,
+    borderRadius: 12,
+    backgroundColor: '#fee2e2',
+    marginLeft: 8,
   },
 });
 

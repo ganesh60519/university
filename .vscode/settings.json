@@ -1,5 +1,3 @@
 {
-    "zencoder.enableRepoIndexing": true,
-    "zencoder.repoInfo.lastCheckTime": 1752047935125,
-    "zencoder.repoInfo.currentWarningState": false
+    "zencoder.enableRepoIndexing": true
 }
