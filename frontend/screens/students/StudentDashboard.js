@@ -1175,6 +1175,8 @@ const ProfileScreen = () => {
                 style={styles.profileImage}
                 resizeMode="cover"
               />
+      
+      
               <View style={styles.editIconContainer}>
                 <MaterialIcons name="edit" size= {20} color="#ffffff" />
               </View>

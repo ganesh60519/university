@@ -1,1 +1,1 @@
-export const IP = '192.168.29.145'; // Replace with your IP address
+export const IP = '192.168.29.146'; // Updated to localhost for development
